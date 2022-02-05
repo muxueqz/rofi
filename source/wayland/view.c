@@ -80,16 +80,31 @@ static struct {
   guint repaint_source;
   /** Window fullscreen */
   gboolean fullscreen;
+
+  int monitor_width;
+  int monitor_height;
 } WlState = {
     .flags = MENU_NORMAL,
     .idle_timeout = 0,
     .count = 0L,
     .repaint_source = 0,
     .fullscreen = FALSE,
+    .monitor_width = 0,
+    .monitor_height = 0,
 };
 
 static void wayland_rofi_view_get_current_monitor(int *width, int *height) {
-  display_get_surface_dimensions(width, height);
+  // TODO: handle changing monitor resolution
+  if (WlState.monitor_width == 0 && WlState.monitor_height == 0) {
+    display_get_surface_dimensions(&WlState.monitor_width, &WlState.monitor_height);
+  }
+
+  if (width) {
+    *width = WlState.monitor_width;
+  }
+  if (height) {
+    *height = WlState.monitor_height;
+  }
 }
 
 /**
