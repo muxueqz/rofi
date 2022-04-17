@@ -177,6 +177,16 @@ Position **rofi** over the window with the given X11 window ID.
 
 Set ellipsize mode to start. So, the end of the string is visible.
 
+`-display-columns`
+
+A comma seperated list of columns to show.
+
+`-display-column-separator`
+
+The column separator. This is a regex. 
+
+*default*: '\t'
+
 
 ## RETURN VALUE
 
@@ -195,7 +205,7 @@ Qball Cow <qball@gmpclient.org>
 
 Rasmus Steinke <rasi@xssn.at>
 
-Quentin Glidic <sardemff7+rofi@sardemff7.net>
+Morgane Glidic <sardemff7+rofi@sardemff7.net>
 
 
 Original code based on work by: Sean Pringle <sean.pringle@gmail.com>

@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,7 +26,7 @@
  */
 
 /** The log domain of this dialog. */
-#define G_LOG_DOMAIN "Dialogs.DRun"
+#define G_LOG_DOMAIN "Modes.DRun"
 
 #include <config.h>
 #ifdef ENABLE_DRUN
@@ -44,11 +44,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "dialogs/drun.h"
-#include "dialogs/filebrowser.h"
 #include "helper.h"
 #include "history.h"
 #include "mode-private.h"
+#include "modes/drun.h"
+#include "modes/filebrowser.h"
 #include "rofi.h"
 #include "settings.h"
 #include "timings.h"
@@ -1385,7 +1385,7 @@ static int drun_token_match(const Mode *data, rofi_int_matcher **tokens,
   }
   int match = 1;
   if (tokens) {
-    for (int j = 0; match && tokens != NULL && tokens[j] != NULL; j++) {
+    for (int j = 0; match && tokens[j] != NULL; j++) {
       int test = 0;
       rofi_int_matcher *ftokens[2] = {tokens[j], NULL};
       // Match name

@@ -3,7 +3,7 @@
  *
  * MIT/X11 License
  * Copyright © 2012 Sean Pringle <sean.pringle@gmail.com>
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -63,8 +63,8 @@
 #include "xcb.h"
 #include <libsn/sn.h>
 
-#include "dialogs/window.h"
 #include "mode.h"
+#include "modes/window.h"
 
 #include <rofi.h>
 
@@ -977,10 +977,8 @@ int monitor_active(workarea *mon) {
   }
   g_debug("Monitor active");
   if (mon_set) {
-    if (mon) {
-      *mon = mon_cache;
-      return TRUE;
-    }
+    *mon = mon_cache;
+    return TRUE;
   }
   if (config.monitor != NULL) {
     g_debug("Monitor lookup  by name : %s", config.monitor);

@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,10 +26,9 @@
  */
 
 /** The log domain of this dialog. */
-#define G_LOG_DOMAIN "Dialogs.Script"
+#define G_LOG_DOMAIN "Modes.Script"
 
-#include "dialogs/script.h"
-#include "config.h"
+#include "modes/script.h"
 #include "helper.h"
 #include "rofi.h"
 #include <assert.h>
@@ -47,7 +46,7 @@
 
 #include "rofi-icon-fetcher.h"
 
-#include "dialogs/dmenuscriptshared.h"
+#include "modes/dmenuscriptshared.h"
 
 typedef struct {
   /** ID of the current script. */
@@ -66,6 +65,7 @@ typedef struct {
   /** Configuration settings. */
   char *message;
   char *prompt;
+  char *data;
   gboolean do_markup;
   char delim;
   /** no custom */
@@ -135,6 +135,9 @@ static void parse_header_entry(Mode *sw, char *line, ssize_t length) {
       pd->no_custom = (strcasecmp(value, "true") == 0);
     } else if (strcasecmp(line, "use-hot-keys") == 0) {
       pd->use_hot_keys = (strcasecmp(value, "true") == 0);
+    } else if (strcasecmp(line, "data") == 0) {
+      g_free(pd->data);
+      pd->data = g_strdup(value);
     }
   }
 }
@@ -163,6 +166,9 @@ static DmenuScriptEntry *execute_executor(Mode *sw, char *arg,
 
   if (entry && entry->info) {
     env = g_environ_setenv(env, "ROFI_INFO", entry->info, TRUE);
+  }
+  if (pd->data) {
+    env = g_environ_setenv(env, "ROFI_DATA", pd->data, TRUE);
   }
 
   if (g_shell_parse_argv(sw->ed, &argc, &argv, &error)) {
@@ -204,7 +210,11 @@ static DmenuScriptEntry *execute_executor(Mode *sw, char *arg,
           }
           if (retv) {
             size_t buf_length = strlen(buffer) + 1;
+#if GLIB_CHECK_VERSION(2, 68, 0)
+            retv[(*length)].entry = g_memdup2(buffer, buf_length);
+#else
             retv[(*length)].entry = g_memdup(buffer, buf_length);
+#endif
             retv[(*length)].icon_name = NULL;
             retv[(*length)].meta = NULL;
             retv[(*length)].info = NULL;
@@ -339,6 +349,7 @@ static void script_mode_destroy(Mode *sw) {
     g_free(rmpd->cmd_list);
     g_free(rmpd->message);
     g_free(rmpd->prompt);
+    g_free(rmpd->data);
     g_free(rmpd->urgent_list);
     g_free(rmpd->active_list);
     g_free(rmpd);
@@ -386,7 +397,7 @@ static int script_token_match(const Mode *sw, rofi_int_matcher **tokens,
   ScriptModePrivateData *rmpd = sw->private_data;
   int match = 1;
   if (tokens) {
-    for (int j = 0; match && tokens != NULL && tokens[j] != NULL; j++) {
+    for (int j = 0; match && tokens[j] != NULL; j++) {
       rofi_int_matcher *ftokens[2] = {tokens[j], NULL};
       int test = 0;
       test = helper_token_match(ftokens, rmpd->cmd_list[index].entry);

@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2017 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -25,34 +25,24 @@
  *
  */
 
-#ifndef ROFI_DIALOG_FILE_BROWSER_H
-#define ROFI_DIALOG_FILE_BROWSER_H
+#ifndef ROFI_MODE_RUN_H
+#define ROFI_MODE_RUN_H
+
 #include "mode.h"
+
 /**
- * @defgroup FileBrowserMode FileBrowser
+ * @defgroup RUNMode Run
  * @ingroup MODES
  *
+ * This mode uses the following options from the #config object:
+ *  * #Settings::run_command
+ *  * #Settings::run_shell_command
+ *  * #Settings::run_list_command
  *
  * @{
  */
 /** #Mode object representing the run dialog. */
-extern Mode file_browser_mode;
+extern Mode run_mode;
 
-/**
- * Create a new filebrowser.
- * @returns a new filebrowser structure.
- */
-Mode *create_new_file_browser(void);
-/**
- * @param sw Mode object.
- * @param mretv return value passed in.
- * @param input The user input string.
- * @param selected_line The user selected line.
- * @param path The full path as output.
- *
- * @returns the state the user selected.
- */
-ModeMode file_browser_mode_completer(Mode *sw, int mretv, char **input,
-                                     unsigned int selected_line, char **path);
 /**@}*/
-#endif // ROFI_DIALOG_FILE_BROWSER_H
+#endif // ROFI_MODE_RUN_H

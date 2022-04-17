@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -72,12 +72,18 @@ typedef struct {
  * Currently supports string, boolean and number (signed and unsigned).
  */
 static XrmOption xrmOptions[] = {
-    {xrm_String, "switchers", {.str = &config.modi}, NULL, "", CONFIG_DEFAULT},
+    {xrm_String, "switchers", {.str = &config.modes}, NULL, "", CONFIG_DEFAULT},
     {xrm_String,
      "modi",
-     {.str = &config.modi},
+     {.str = &config.modes},
      NULL,
-     "Enabled modi",
+     "Enabled modes",
+     CONFIG_DEFAULT},
+    {xrm_String,
+     "modes",
+     {.str = &config.modes},
+     NULL,
+     "Enable modes",
      CONFIG_DEFAULT},
     {xrm_String,
      "font",
@@ -278,7 +284,13 @@ static XrmOption xrmOptions[] = {
      CONFIG_DEFAULT},
     {xrm_String,
      "combi-modi",
-     {.str = &config.combi_modi},
+     {.str = &config.combi_modes},
+     NULL,
+     "Set the modi to combine in combi mode",
+     CONFIG_DEFAULT},
+    {xrm_String,
+     "combi-modes",
+     {.str = &config.combi_modes},
      NULL,
      "Set the modi to combine in combi mode",
      CONFIG_DEFAULT},
@@ -599,7 +611,7 @@ void config_parse_cmd_options(void) {
 static gboolean __config_parser_set_property(XrmOption *option,
                                              const Property *p, char **error) {
   if (option->type == xrm_String) {
-    if (p->type != P_STRING && p->type != P_LIST) {
+    if (p->type != P_STRING && (p->type != P_LIST && p->type != P_INTEGER)) {
       *error =
           g_strdup_printf("Option: %s needs to be set with a string not a %s.",
                           option->name, PropertyTypeName[p->type]);
@@ -609,15 +621,17 @@ static gboolean __config_parser_set_property(XrmOption *option,
     if (p->type == P_LIST) {
       for (GList *iter = p->value.list; iter != NULL;
            iter = g_list_next(iter)) {
-        Property *p = (Property *)iter->data;
+        Property *p2 = (Property *)iter->data;
         if (value == NULL) {
-          value = g_strdup((char *)(p->value.s));
+          value = g_strdup((char *)(p2->value.s));
         } else {
-          char *nv = g_strjoin(",", value, (char *)(p->value.s), NULL);
+          char *nv = g_strjoin(",", value, (char *)(p2->value.s), NULL);
           g_free(value);
           value = nv;
         }
       }
+    } else if (p->type == P_INTEGER) {
+      value = g_strdup_printf("%d", p->value.i);
     } else {
       value = g_strdup(p->value.s);
     }

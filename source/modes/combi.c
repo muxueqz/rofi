@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,7 +26,7 @@
  */
 
 /** The log domain of this dialog. */
-#define G_LOG_DOMAIN "Dialogs.Combi"
+#define G_LOG_DOMAIN "Modes.Combi"
 
 #include "helper.h"
 #include "settings.h"
@@ -36,7 +36,7 @@
 
 #include "mode-private.h"
 #include "widgets/textbox.h"
-#include <dialogs/dialogs.h>
+#include <modes/modes.h>
 #include <pango/pango.h>
 #include <theme.h>
 
@@ -63,21 +63,21 @@ static void combi_mode_parse_switchers(Mode *sw) {
   CombiModePrivateData *pd = mode_get_private_data(sw);
   char *savept = NULL;
   // Make a copy, as strtok will modify it.
-  char *switcher_str = g_strdup(config.combi_modi);
+  char *switcher_str = g_strdup(config.combi_modes);
   const char *const sep = ",#";
   // Split token on ','. This modifies switcher_str.
   for (char *token = strtok_r(switcher_str, sep, &savept); token != NULL;
        token = strtok_r(NULL, sep, &savept)) {
     /* Check against recursion. */
     if (g_strcmp0(token, sw->name) == 0) {
-      g_warning("You cannot add '%s' to the list of combined modi.", sw->name);
+      g_warning("You cannot add '%s' to the list of combined modes.", sw->name);
       continue;
     }
     // Resize and add entry.
     pd->switchers = (CombiMode *)g_realloc(
         pd->switchers, sizeof(CombiMode) * (pd->num_switchers + 1));
 
-    Mode *mode = rofi_collect_modi_search(token);
+    Mode *mode = rofi_collect_modes_search(token);
     if (mode != NULL) {
       pd->switchers[pd->num_switchers].disable = FALSE;
       pd->switchers[pd->num_switchers++].mode = mode;
@@ -236,10 +236,7 @@ static char *combi_mgrv(const Mode *sw, unsigned int selected_line, int *state,
         }
 
         retv = helper_string_replace_if_exists(
-            config.combi_display_format,
-            "{mode}", dname,
-            "{text}", str,
-            NULL);
+            config.combi_display_format, "{mode}", dname, "{text}", str, NULL);
         g_free(str);
 
         if (attr_list != NULL) {

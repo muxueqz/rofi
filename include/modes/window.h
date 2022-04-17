@@ -25,27 +25,23 @@
  *
  */
 
-#ifndef ROFI_DIALOG_DMENU_H
-#define ROFI_DIALOG_DMENU_H
+#ifndef ROFI_MODE_WINDOW_H
+#define ROFI_MODE_WINDOW_H
+
+#include "mode.h"
 
 /**
- * @defgroup DMENU DMenu
+ * @defgroup WINDOWMode Window
  * @ingroup MODES
- *
  *
  * @{
  */
-/**
- * dmenu dialog.
- *
- * @returns TRUE if script was successful.
- */
-int dmenu_mode_dialog(void);
+#ifdef WINDOW_MODE
 
-/**
- * Print dmenu mode commandline options to stdout, for use in help menu.
- */
-void print_dmenu_options(void);
+extern Mode window_mode;
+extern Mode window_mode_cd;
 
-/**@}*/
-#endif // ROFI_DIALOG_DMENU_H
+void window_client_handle_signal(xcb_window_t win, gboolean create);
+#endif // WINDOW_MODE
+/** @}*/
+#endif // ROFI_MODE_WINDOW_H

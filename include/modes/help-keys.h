@@ -25,26 +25,21 @@
  *
  */
 
-#ifndef ROFI_DIALOG_SSH_H
-#define ROFI_DIALOG_SSH_H
+#ifndef ROFI_MODE_HELPKEYS_H
+#define ROFI_MODE_HELPKEYS_H
+
 #include "mode.h"
 /**
- * @defgroup SSHMode SSH
+ * @defgroup HELPKEYSMode KeysHelp
  * @ingroup MODES
  *
- * SSH Mode, returns a list of known SSH hosts the user can log into.
- * It does this by parsing the SSH config file and optional the known host  and
- * host list It also keeps history of the last chosen hosts.
- *
- * This mode uses the following options from the #config object:
- *  * #Settings::ssh_command
- *  * #Settings::parse_known_hosts
- *  * #Settings::parse_hosts
+ * Displays the different keybindings available in *rofi*
  *
  * @{
  */
-
-/** #Mode object representing the ssh dialog. */
-extern Mode ssh_mode;
+/**
+ * #Mode object representing the help key mode view
+ */
+extern Mode help_keys_mode;
 /**@}*/
-#endif // ROFI_DIALOG_SSH_H
+#endif // ROFI_MODE_HELPKEYS_H

@@ -54,7 +54,7 @@
 #include "settings.h"
 #include "timings.h"
 
-#include "dialogs/dialogs.h"
+#include "modes/modes.h"
 #include "display.h"
 #include "helper-theme.h"
 #include "helper.h"

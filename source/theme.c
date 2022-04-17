@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -252,8 +252,10 @@ void rofi_theme_free(ThemeWidget *widget) {
  * print
  */
 inline static void printf_double(double d) {
-  char buf[G_ASCII_DTOSTR_BUF_SIZE];
-  g_ascii_formatd(buf, G_ASCII_DTOSTR_BUF_SIZE, "%.4lf", d);
+  char buf[G_ASCII_DTOSTR_BUF_SIZE + 1] = {
+      0,
+  };
+  g_ascii_formatd(buf, G_ASCII_DTOSTR_BUF_SIZE, "%.4f", d);
   fputs(buf, stdout);
 }
 
@@ -1236,17 +1238,17 @@ GList *rofi_theme_get_list_distance(const widget *widget,
        iter = g_list_next(iter)) {
     Property *prop = (Property *)(iter->data);
     if (prop->type == P_PADDING) {
-      RofiDistance *p = g_new0(RofiDistance, 1);
-      *p = prop->value.padding.left;
-      retv = g_list_append(retv, p);
+      RofiDistance *pnew = g_new0(RofiDistance, 1);
+      *pnew = prop->value.padding.left;
+      retv = g_list_append(retv, pnew);
     } else if (prop->type == P_INTEGER) {
-      RofiDistance *p = g_new0(RofiDistance, 1);
+      RofiDistance *pnew = g_new0(RofiDistance, 1);
       RofiDistance d =
           (RofiDistance){.base = {prop->value.i, ROFI_PU_PX,
                                   ROFI_DISTANCE_MODIFIER_NONE, NULL, NULL},
                          .style = ROFI_HL_SOLID};
-      *p = d;
-      retv = g_list_append(retv, p);
+      *pnew = d;
+      retv = g_list_append(retv, pnew);
     } else {
       g_warning("Invalid type detected in list.");
     }
@@ -1543,6 +1545,57 @@ static void rofi_theme_parse_process_conditionals_int(workarea mon,
     }
   }
 }
+
+static char *rofi_theme_widget_get_name(ThemeWidget *wid) {
+  GString *str = g_string_new(wid->name);
+  for (ThemeWidget *i = wid->parent; i->parent != NULL; i = i->parent) {
+    g_string_prepend_c(str, ' ');
+    g_string_prepend(str, i->name);
+  }
+  char *retv = str->str;
+  g_string_free(str, FALSE);
+  return retv;
+}
+
+static void rofi_theme_parse_process_links_int(ThemeWidget *wid) {
+  if (wid == NULL) {
+    return;
+  }
+
+  for (unsigned int i = 0; i < wid->num_widgets; i++) {
+    ThemeWidget *widget = wid->widgets[i];
+    rofi_theme_parse_process_links_int(widget);
+    if (widget->properties == NULL) {
+      continue;
+    }
+    GHashTableIter iter;
+    gpointer key, value;
+    g_hash_table_iter_init(&iter, widget->properties);
+    while (g_hash_table_iter_next(&iter, &key, &value)) {
+      Property *pv = (Property *)value;
+      if (pv->type == P_LINK) {
+        if (pv->value.link.ref == NULL) {
+          rofi_theme_resolve_link_property(pv, 0);
+          if (pv->value.link.ref == pv) {
+            char *n = rofi_theme_widget_get_name(widget);
+            GString *str = g_string_new(NULL);
+            g_string_printf(
+                str, "Failed to resolve variable '%s' in: `%s { %s: var(%s);}`",
+                pv->value.link.name, n, pv->name, pv->value.link.name);
+
+            rofi_add_error_message(str);
+            g_free(n);
+          }
+        }
+      }
+    }
+  }
+}
+
+void rofi_theme_parse_process_links(void) {
+  rofi_theme_parse_process_links_int(rofi_theme);
+}
+
 void rofi_theme_parse_process_conditionals(void) {
   workarea mon;
   monitor_active(&mon);

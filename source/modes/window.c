@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,7 +26,7 @@
  */
 
 /** The log domain of this dialog. */
-#define G_LOG_DOMAIN "Dialogs.Window"
+#define G_LOG_DOMAIN "Modes.Window"
 
 #include <config.h>
 
@@ -49,8 +49,8 @@
 #include "xcb-internal.h"
 #include "xcb.h"
 
-#include "dialogs/window.h"
 #include "helper.h"
+#include "modes/window.h"
 #include "rofi.h"
 #include "settings.h"
 #include "widgets/textbox.h"
@@ -418,7 +418,7 @@ static int window_match(const Mode *sw, rofi_int_matcher **tokens,
   client *c = cache_client->data[idx];
 
   if (tokens) {
-    for (int j = 0; match && tokens != NULL && tokens[j] != NULL; j++) {
+    for (int j = 0; match && tokens[j] != NULL; j++) {
       int test = 0;
       // Dirty hack. Normally helper_token_match does _all_ the matching,
       // Now we want it to match only one item at the time.

@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,9 +26,9 @@
  */
 
 /** The log domain of this dialog. */
-#define G_LOG_DOMAIN "Dialogs.DMenu"
+#define G_LOG_DOMAIN "Modes.DMenu"
 
-#include "dialogs/dmenu.h"
+#include "modes/dmenu.h"
 #include "helper.h"
 #include "rofi-icon-fetcher.h"
 #include "rofi.h"
@@ -50,7 +50,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "dialogs/dmenuscriptshared.h"
+#include "modes/dmenuscriptshared.h"
 
 static int dmenu_mode_init(Mode *sw);
 static int dmenu_token_match(const Mode *sw, rofi_int_matcher **tokens,
@@ -239,21 +239,23 @@ static gchar *dmenu_format_output_string(const DmenuModePrivateData *pd,
   for (; splitted && splitted[ns]; ns++) {
     ;
   }
+  GString *str_retv = g_string_new("");
   for (uint32_t i = 0; pd->columns && pd->columns[i]; i++) {
     unsigned int index =
         (unsigned int)g_ascii_strtoull(pd->columns[i], NULL, 10);
-    if (index < ns && index > 0) {
-      if (retv == NULL) {
-        retv = g_strdup(splitted[index - 1]);
+    if (index <= ns && index > 0) {
+      if (index == 1) {
+        g_string_append(str_retv, splitted[index - 1]);
       } else {
-        gchar *t = g_strjoin("\t", retv, splitted[index - 1], NULL);
-        g_free(retv);
-        retv = t;
+        g_string_append_c(str_retv, '\t');
+        g_string_append(str_retv, splitted[index - 1]);
       }
     }
   }
   g_strfreev(splitted);
-  return retv ? retv : g_strdup("");
+  retv = str_retv->str;
+  g_string_free(str_retv, FALSE);
+  return retv;
 }
 
 static inline unsigned int get_index(unsigned int length, int index) {
@@ -474,7 +476,7 @@ static int dmenu_token_match(const Mode *sw, rofi_int_matcher **tokens,
     //        int retv = helper_token_match ( tokens, esc );
     int match = 1;
     if (tokens) {
-      for (int j = 0; match && tokens != NULL && tokens[j] != NULL; j++) {
+      for (int j = 0; match && tokens[j] != NULL; j++) {
         rofi_int_matcher *ftokens[2] = {tokens[j], NULL};
         int test = 0;
         test = helper_token_match(ftokens, esc);
@@ -818,4 +820,8 @@ void print_dmenu_options(void) {
   print_help_msg("-w", "windowid", "Position over window with X11 windowid.",
                  NULL, is_term);
   print_help_msg("-keep-right", "", "Set ellipsize to end.", NULL, is_term);
+  print_help_msg("--display-columns", "", "Only show the selected columns",
+                 NULL, is_term);
+  print_help_msg("--display-column-separator", "\t",
+                 "Separator to use to split columns (regex)", NULL, is_term);
 }

@@ -25,20 +25,23 @@
  *
  */
 
-#ifndef ROFI_DIALOG_DRUN_H
-#define ROFI_DIALOG_DRUN_H
-#include "mode.h"
-
-#include "mode.h"
+#ifndef ROFI_MODES_MODES_H
+#define ROFI_MODES_MODES_H
 
 /**
- * @defgroup DRUNMode DRun
- * @ingroup MODES
- * @{
+ * @defgroup MODES Modes
  */
-#ifdef ENABLE_DRUN
-/** #Mode object representing the desktop menu run dialog. */
-extern Mode drun_mode;
-#endif // ENABLE_DRUN
-/**@}*/
-#endif // ROFI_DIALOG_DRUN_H
+/**
+ * List of available modes.
+ */
+
+#include "modes/combi.h"
+#include "modes/dmenu.h"
+#include "modes/drun.h"
+#include "modes/filebrowser.h"
+#include "modes/help-keys.h"
+#include "modes/run.h"
+#include "modes/script.h"
+#include "modes/ssh.h"
+#include "modes/window.h"
+#endif // ROFI_MODES_MODES_H

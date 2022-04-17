@@ -3,7 +3,7 @@
  *
  * MIT/X11 License
  * Copyright © 2012 Sean Pringle <sean.pringle@gmail.com>
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -727,9 +727,7 @@ static void textbox_cursor_del_eol(textbox *tb) {
 static void textbox_cursor_del_sol(textbox *tb) {
   if (tb && tb->cursor >= 0) {
     int length = tb->cursor;
-    if (length >= 0) {
-      textbox_delete(tb, 0, length);
-    }
+    textbox_delete(tb, 0, length);
   }
 }
 static void textbox_cursor_del_word(textbox *tb) {

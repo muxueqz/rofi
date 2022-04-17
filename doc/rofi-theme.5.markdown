@@ -4,19 +4,153 @@
 
 **rofi-theme** - Rofi theme format files
 
+## GETTING STARTED WITH THEMING 
+
+The easiest way to get started theming rofi is by modifying your existing theme.
+
+Themes can be modified/tweaked by adding theming elements to the end of the  
+config file. The default location of this file is `~/.config/rofi/config.rasi`,
+if the file does not exists, you can create it.
+
+A basic config:
+
+```css
+configuration {
+  modes: [ combi ];
+  combi-modes: [ window, drun, run ];
+}
+
+@theme "gruvbox-light"
+ 
+/* Insert theme modifications after this */
+```
+
+
+For example if we want to change the `Type to filter` text in the entry box we
+append the following:
+
+```css
+entry {
+    placeholder: "Type here";
+}
+```
+
+In the above section, `entry` indicates the widget, `placeholder` is the
+property we want to modify and we set it to the string `"Type here"`.
+To find the commonly available widgets in rofi, see the 'Basic structure' section.
+
+To change the mouse over cursor to a pointer, add:
+
+```css
+entry {
+    placeholder: "Type here";
+    cursor: pointer;
+}
+```
+
+For the next modification, we want to add the icon after each text element and
+increase the size. First we start by modifying the `element` widget:
+
+```css
+
+element {
+  orientation: horizontal;
+  children: [ element-text, element-icon ];
+  spacing: 5px;
+}
+
+```
+
+Resulting in the following packing:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐ 
+│ element                                                             │ 
+│ ┌─────────────────────────────────────────────┐ ┌─────────────────┐ │ 
+│ │element─text                                 │ │ element─icon    │ │ 
+│ └─────────────────────────────────────────────┘ └─────────────────┘ │ 
+└─────────────────────────────────────────────────────────────────────┘ 
+```
+
+The `element` (container) widget hold each entry in the `listview`, we add the
+two pre-defined children in the order we want to show. We also specify the
+packing direction (`orientation`) and the spacing between the children
+(`spacing`). We specify the space between the two children in absolute pixels
+(`px`).
+
+To increase the icon-size, we need to modify the `element-icon` widget.
+
+```css
+element-icon {
+    size: 2.5em;
+}
+```
+
+```
+┌─────────────────────────────────────────────────────────────────────┐ 
+│ element                                                             │ 
+│ ┌─────────────────────────────────────────────┐ ┌─────────────────┐ │ 
+│ │element─text                                 │ │    element      │ │ 
+│ │                                             │ │       ─         │ │ 
+│ │                                             │ │     icon        │ │ 
+│ └─────────────────────────────────────────────┘ └─────────────────┘ │ 
+└─────────────────────────────────────────────────────────────────────┘ 
+```
+
+In this example we specify the size in the [em](https://www.w3.org/Style/LieBos3e/em) unit.
+
+Now lets change the text color of both the `entry` and the `element-text` widget to red and background to blue.
+
+```css
+entry, element-text {
+  text-color: red;
+  background-color: rgb(0,0,255);
+}
+```
+
+Here we use two different methods of writing down the color, for `text-color`
+we used a named color, for `background-color` we specify it in `rgb`.
+We also specify the property for multiple widgets by passing a comma separated
+list of widget names.
+
+If you want to center the text relative to the icon, we can set this:
+
+```css
+element-icon {
+    vertical-align: 0.5;
+}
+```
+
+```
+┌─────────────────────────────────────────────────────────────────────┐ 
+│ element                                                             │ 
+│ ┌─────────────────────────────────────────────┐ ┌─────────────────┐ │ 
+│ │                                             │ │    element      │ │ 
+│ │element-text                                 │ │       ─         │ │ 
+│ │                                             │ │     icon        │ │ 
+│ └─────────────────────────────────────────────┘ └─────────────────┘ │ 
+└─────────────────────────────────────────────────────────────────────┘ 
+```
+
+If you want to see the complete theme, including the modification you can run:
+
+```bash
+rofi -dump-theme
+```
+
 ## DEFAULT THEME LOADING
 
 By default, rofi loads the default theme. This theme is **always** loaded.
-In the default (always loaded) configuration it does:
+The default configuration contains:
 
 ```css
 @theme "default"
 ```
 
-To unload the default theme, and load another theme, add `@theme` to your
-`config.rasi` file.
+To unload the default theme, and load another theme, add the `@theme` statement 
+to your `config.rasi` file.
 
-If you have a theme loaded by `@theme` or use the default theme, you can tweak
+If you have a theme loaded via `@theme` or use the default theme, you can tweak
 it by adding overriding elements at the end of your `config.rasi` file.
 
 For the difference between `@import` and `@theme` see the `Multiple file
@@ -39,7 +173,7 @@ user-friendly way. Therefore, a new file format has been created, replacing the 
 
 ## Encoding
 
-The encoding of the file is utf-8. Both unix (`\n`) and windows (`\r\n`) newlines format are supported. But unix is
+The encoding of the file is UTF-8. Both unix (`\n`) and windows (`\r\n`) newlines format are supported. But unix is
 preferred.
 
 ## Comments
@@ -47,7 +181,7 @@ preferred.
 C and C++ file comments are supported.
 
 * Anything after  `// ` and before a newline is considered a comment.
-* Everything between `/*` and `*/` is a comment.
+* Everything between `/*` and `*/` is a comment, this comment can span multiple lines.
 
 Comments can be nested and the C comments can be inline.
 
@@ -91,7 +225,7 @@ abbreviation for **r**ofi **a**dvanced **s**tyle **i**nformation.
 ## Basic Structure
 
 Each element has a section with defined properties. Global properties can be defined in section `* { }`.
-Sub-section names begin with a hash symbol `#`.
+Sub-section names begin with an optional hash symbol `#`.
 
 It is advised to define the *global properties section* on top of the file to
 make inheritance of properties clearer.
@@ -131,8 +265,8 @@ A theme can have multiple element theme sections.
 
 The element path can consist of multiple names separated by whitespace or dots.
 Each element may contain any number of letters, numbers and `-`'s.
-The first element in the element path should always start with a `#`.
-Multiple elements can be specified by a `,`.
+The first element in the element path can optionally start with a `#` (for
+historic reasons). Multiple elements can be specified by a `,`.
 
 This is a valid element name:
 
@@ -153,8 +287,8 @@ element normal normal, button {
 }
 ```
 
-Each section inherits the global properties. Properties can be explicitly inherited from their parent with the
-`inherit` keyword.
+Each section inherits the global properties. Properties can be explicitly
+inherited from their parent with the `inherit` keyword.
 In the following example:
 
 ```css
@@ -170,7 +304,8 @@ mainbox {
 }
 ```
 
-The element `mainbox` will have the following set of properties (if `mainbox` is a child of `window`):
+The element `mainbox` will have the following set of properties (if `mainbox`
+is a child of `window`):
 
 ```css
 a: 1;
@@ -234,7 +369,15 @@ For example:
 font: "Awasome 12";
 ```
 
-The string must be valid UTF-8.
+The string must be valid UTF-8, special characters can be escaped:
+
+```css
+text {
+    content: "Line one\n\tIndented line two";
+}
+```
+
+The following special characters can be escaped: `\b`, `\f`, `\n`, `\r`, `\t`, `\v`, `\` and `"`.
 
 ## Integer
 
@@ -401,17 +544,21 @@ Rofi supports some maths in calculating sizes. For this it uses the CSS syntax:
 width: calc( 100% - 37px );
 ```
 
+```css
+width: calc( 20% min 512 );
+```
+
 It supports the following operations:
 
-* `+`   : Add
-* `-`   : Subtract
-* `/`   : Divide
-* `*`   : Multiply
-* `%`   : Multiply
-* `min` : Minimum of l or rvalue;
-* `max` : Maximum of l or rvalue;
+* `+`     : Add
+* `-`     : Subtract
+* `/`     : Divide
+* `*`     : Multiply
+* `%`     : Modulo
+* `min`   : Minimum of lvalue or rvalue;
+* `max`   : Maximum of lvalue or rvalue;
 * `floor` : Round down lvalue to the next multiple of rvalue 
-* `ceil` : Round up lvalue to the next multiple of rvalue 
+* `ceil`  : Round up lvalue to the next multiple of rvalue 
 * `round` : Round lvalue to the next multiple of rvalue 
 
 It uses the C precedence ordering.
@@ -456,24 +603,28 @@ style property.
 
 Indicate a place on the window/monitor.
 
+```
+┌─────────────┬─────────────┬─────────────┐
+│ north west  │    north    │  north east │
+├─────────────┼─────────────┼─────────────┤
+│   west      │   center    │     east    │
+├─────────────┼─────────────┼─────────────┤
+│ south west  │    south    │  south east │
+└─────────────┴─────────────┴─────────────┘
+```
+
 * Format: `(center|east|north|west|south|north east|north west|south west|south east)`
-
-```
-
-north west   |    north    |  north east
--------------|-------------|------------
-      west   |   center    |  east
--------------|-------------|------------
-south west   |    south    |  south east
-```
 
 ## Visibility
 
 It is possible to hide widgets:
 
+```css
 inputbar {
     enabled: false;
 }
+```
+
 
 ## Reference
 
@@ -693,22 +844,22 @@ The following properties are currently supported:
 
 ###  all widgets:
 
-* **enabled**:         enable/disable the widget
-* **padding**:         padding
+* **enabled**:           enable/disable rendering of the widget
+* **padding**:           padding
   Padding on the inside of the widget
-* **margin**:          padding
+* **margin**:            padding
   Margin on the outside of the widget
-* **border**:          border
+* **border**:            border
   Border around the widget (between padding and margin)/
-* **border-radius**:    padding
+* **border-radius**:     padding
   Sets a radius on the corners of the borders.
-* **background-color**:      color
+* **background-color**:  color
   Background color
-* **background-image**:      image
+* **background-image**:  image
   Background image
 * **border-color**:      color
   Color of the border
-* **cursor**:      cursor
+* **cursor**:            cursor
   Type of mouse cursor that is set when the mouse pointer is hovered over the widget.
 
 ### window:
@@ -731,8 +882,8 @@ The following properties are currently supported:
     Window is fullscreen.
 * **width**:          distance
     The width of the window
-* **x-offset**:  distance
-* **y-offset**:  distance
+* **x-offset**:       distance
+* **y-offset**:       distance
     The offset of the window to the anchor point, allowing you to push the window left/right/up/down
 
 
@@ -747,7 +898,7 @@ The following properties are currently supported:
 
 * **orientation**:      orientation
         Set the direction the elements are packed.
-* **spacing**:         distance
+* **spacing**:          distance
         Distance between the packed elements.
 
 ### textbox:
@@ -755,7 +906,7 @@ The following properties are currently supported:
 * **background-color**:  color
 * **border-color**:      the color used for the border around the widget.
 * **font**:              the font used by this textbox (string).
-* **str**:               the string to display by this textbox (string).
+* **str**/**content**:   the string to display by this textbox (string).
 * **vertical-align**:    Vertical alignment of the text. A number between 0 (top) and 1 (bottom).
 * **horizontal-align**:  Horizontal alignment of the text. A number between 0 (left) and 1 (right).
 * **text-color**:        the text color to use.
@@ -794,6 +945,8 @@ The following properties are currently supported:
     Indicate how elements are stacked. Horizontal implements the dmenu style.
 * **reverse**:         boolean
     Reverse the ordering (top down to bottom up).
+* **flow**:           orientation
+    The order the elements are layed out.  Vertical is the original 'column' view.
 * **fixed-columns**:    boolean
     Do not reduce the number of columns shown when number of visible elements is not enough to fill them all.
 
@@ -836,42 +989,42 @@ The box can be vertical or horizontal. This is loosely inspired by [GTK](http://
 The current layout of **rofi** is structured as follows:
 
 ```
-|------------------------------------------------------------------------------------|
-| window {BOX:vertical}                                                              |
-| |-------------------------------------------------------------------------------|  |
-| | mainbox  {BOX:vertical}                                                       |  |
-| | |---------------------------------------------------------------------------| |  |
-| | | inputbar {BOX:horizontal}                                                 | |  |
-| | | |---------| |-| |---------------------------------|---| |---| |---| |---| | |  |
-| | | | prompt  | |:| | entry                           |#fr| | / | |#ns| |ci | | |  |
-| | | |---------| |_| |---------------------------------|---| |---| |---| |---| | |  |
-| | |---------------------------------------------------------------------------| |  |
-| |                                                                               |  |
-| | |---------------------------------------------------------------------------| |  |
-| | | message                                                                   | |  |
-| | | |-----------------------------------------------------------------------| | |  |
-| | | | textbox                                                               | | |  |
-| | | |-----------------------------------------------------------------------| | |  |
-| | |---------------------------------------------------------------------------| |  |
-| |                                                                               |  |
-| | |-----------------------------------------------------------------------------|  |
-| | | listview                                                                    |  |
-| | | |------------------------------------------------------------------------]  |  |
-| | | | element                                                                |  |  |
-| | | | |-----------------| |------------------------------------------------] |  |  |
-| | | | |element-icon     | |element-text                                    | |  |  |
-| | | | |-----------------| |------------------------------------------------| |  |  |
-| | | |------------------------------------------------------------------------]  |  |
-| | |-----------------------------------------------------------------------------|  |
-| |                                                                               |  |
-| | |---------------------------------------------------------------------------| |  |
-| | |  mode-switcher {BOX:horizontal}                                           | |  |
-| | | |---------------|   |---------------|  |--------------| |---------------| | |  |
-| | | | Button        |   | Button        |  | Button       | | Button        | | |  |
-| | | |---------------|   |---------------|  |--------------| |---------------| | |  |
-| | |---------------------------------------------------------------------------| |  |
-| |-------------------------------------------------------------------------------|  |
-|------------------------------------------------------------------------------------|
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│ window {BOX:vertical}                                                              │
+│ ┌───────────────────────────────────────────────────────────────────────────────┐  │
+│ │ mainbox  {BOX:vertical}                                                       │  │
+│ │ ┌───────────────────────────────────────────────────────────────────────────┐ │  │
+│ │ │ inputbar {BOX:horizontal}                                                 │ │  │
+│ │ │ ┌─────────┐ ┌─┐ ┌───────────────────────────────┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐ │ │  │
+│ │ │ │ prompt  │ │:│ │ entry                         │ │#fr│ │ / │ │#ns│ │ci │ │ │  │
+│ │ │ └─────────┘ └─┘ └───────────────────────────────┘ └───┘ └───┘ └───┘ └───┘ │ │  │
+│ │ └───────────────────────────────────────────────────────────────────────────┘ │  │
+│ │                                                                               │  │
+│ │ ┌───────────────────────────────────────────────────────────────────────────┐ │  │
+│ │ │ message                                                                   │ │  │
+│ │ │ ┌───────────────────────────────────────────────────────────────────────┐ │ │  │
+│ │ │ │ textbox                                                               │ │ │  │
+│ │ │ └───────────────────────────────────────────────────────────────────────┘ │ │  │
+│ │ └───────────────────────────────────────────────────────────────────────────┘ │  │
+│ │                                                                               │  │
+│ │ ┌───────────────────────────────────────────────────────────────────────────┐ │  │
+│ │ │ listview                                                                  │ │  │
+│ │ │ ┌─────────────────────────────────────────────────────────────────────┐   │ │  │
+│ │ │ │ element                                                             │   │ │  │
+│ │ │ │ ┌─────────────────┐ ┌─────────────────────────────────────────────┐ │   │ │  │
+│ │ │ │ │element─icon     │ │element─text                                 │ │   │ │  │
+│ │ │ │ └─────────────────┘ └─────────────────────────────────────────────┘ │   │ │  │
+│ │ │ └─────────────────────────────────────────────────────────────────────┘   │ │  │
+│ │ └───────────────────────────────────────────────────────────────────────────┘ │  │
+│ │                                                                               │  │
+│ │ ┌───────────────────────────────────────────────────────────────────────────┐ │  │
+│ │ │  mode─switcher {BOX:horizontal}                                           │ │  │
+│ │ │ ┌───────────────┐   ┌───────────────┐  ┌──────────────┐ ┌───────────────┐ │ │  │
+│ │ │ │ Button        │   │ Button        │  │ Button       │ │ Button        │ │ │  │
+│ │ │ └───────────────┘   └───────────────┘  └──────────────┘ └───────────────┘ │ │  │
+│ │ └───────────────────────────────────────────────────────────────────────────┘ │  │
+│ └───────────────────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────────────────┘
 
 
 ```
@@ -882,16 +1035,15 @@ The current layout of **rofi** is structured as follows:
 ### Error message structure
 
 ```
-|-----------------------------------------------------------------------------------|
-| window {BOX:vertical}                                                             |
-| |------------------------------------------------------------------------------|  |
-| | error-message {BOX:vertical}                                                 |  |
-| | |-------------------------------------------------------------------------|  |  |
-| | | textbox                                                                 |  |  |
-| | |-------------------------------------------------------------------------|  |  |
-| |------------------------------------------------------------------------------|  |
-|-----------------------------------------------------------------------------------|
-
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ window {BOX:vertical}                                                            │
+│ ┌─────────────────────────────────────────────────────────────────────────────┐  │
+│ │ error─message {BOX:vertical}                                                │  │
+│ │ ┌────────────────────────────────────────────────────────────────────────┐  │  │
+│ │ │ textbox                                                                │  │  │
+│ │ └────────────────────────────────────────────────────────────────────────┘  │  │
+│ └─────────────────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────────────┘
 
 ```
 
@@ -1035,18 +1187,18 @@ element selected {
 Just like CSS, **rofi** uses the box model for each widget.
 
 ```
-|-------------------------------------------------------------------|
-| margin                                                            |
-|  |-------------------------------------------------------------|  |
-|  | border                                                      |  |
-|  | |---------------------------------------------------------| |  |
-|  | | padding                                                 | |  |
-|  | | |-----------------------------------------------------| | |  |
-|  | | | content                                             | | |  |
-|  | | |-----------------------------------------------------| | |  |
-|  | |---------------------------------------------------------| |  |
-|  |-------------------------------------------------------------|  |
-|-------------------------------------------------------------------|
+┌──────────────────────────────────────────────────────────────────┐
+│ margin                                                           │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ border                                                     │  │
+│  │ ┌────────────────────────────────────────────────────────┐ │  │
+│  │ │ padding                                                │ │  │
+│  │ │ ┌────────────────────────────────────────────────────┐ │ │  │
+│  │ │ │ content                                            │ │ │  │
+│  │ │ └────────────────────────────────────────────────────┘ │ │  │
+│  │ └────────────────────────────────────────────────────────┘ │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 Explanation of the different parts:
@@ -1070,15 +1222,15 @@ Widgets that can pack more then one child widget (currently box and listview) ha
 This property sets the distance between the packed widgets (both horizontally and vertically).
 
 ```
-|---------------------------------------|
-|  |--------| s |--------| s |-------|  |
-|  | child  | p | child  | p | child |  |
-|  |        | a |        | a |       |  |
-|  |        | c |        | c |       |  |
-|  |        | i |        | i |       |  |
-|  |        | n |        | n |       |  |
-|  |--------| g |--------| g |-------|  |
-|---------------------------------------|
+┌───────────────────────────────────────┐
+│ ┌────────┐ s ┌────────┐ s ┌────────┐  │
+│ │ child  │ p │ child  │ p │ child  │  │
+│ │        │ a │        │ a │        │  │
+│ │        │ c │        │ c │        │  │
+│ │        │ i │        │ i │        │  │
+│ │        │ n │        │ n │        │  │
+│ └────────┘ g └────────┘ g └────────┘  │
+└───────────────────────────────────────┘
 ```
 
 ### Advanced box packing
@@ -1086,15 +1238,15 @@ This property sets the distance between the packed widgets (both horizontally an
 More dynamic spacing can be achieved by adding dummy widgets, for example to make one widget centered:
 
 ```
-|----------------------------------------------------|
-|  |---------------|  |--------|  |---------------|  |
-|  | dummy         |  | child  |  | dummy         |  |
-|  | expand: true; |  |        |  | expand: true; |  |
-|  |               |  |        |  |               |  |
-|  |               |  |        |  |               |  |
-|  |               |  |        |  |               |  |
-|  |---------------|  |--------|  |---------------|  |
-|----------------------------------------------------|
+┌────────────────────────────────────────────────────┐
+│  ┌───────────────┐  ┌────────┐  ┌───────────────┐  │
+│  │ dummy         │  │ child  │  │ dummy         │  │
+│  │ expand: true; │  │        │  │ expand: true; │  │
+│  │               │  │        │  │               │  │
+│  │               │  │        │  │               │  │
+│  │               │  │        │  │               │  │
+│  └───────────────┘  └────────┘  └───────────────┘  │
+└────────────────────────────────────────────────────┘
 ```
 
 If both dummy widgets are set to expand, `child` will be centered. Depending on the `expand` flag of child the

@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -31,9 +31,9 @@
  */
 
 /**
- * Log domain for the ssh modi.
+ * Log domain for the ssh mode.
  */
-#define G_LOG_DOMAIN "Dialogs.Ssh"
+#define G_LOG_DOMAIN "Modes.Ssh"
 
 #include <config.h>
 #include <glib.h>
@@ -51,7 +51,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "dialogs/ssh.h"
+#include "modes/ssh.h"
 #include "history.h"
 #include "rofi.h"
 #include "settings.h"

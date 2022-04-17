@@ -25,23 +25,27 @@
  *
  */
 
-#ifndef ROFI_DIALOGS_DIALOGS_H
-#define ROFI_DIALOGS_DIALOGS_H
+#ifndef ROFI_MODE_COMBI_H
+#define ROFI_MODE_COMBI_H
+#include "mode.h"
 
 /**
- * @defgroup MODES Modes
- */
-/**
- * List of available dialogs.
+ * @defgroup COBIMode Combi
+ * @ingroup MODES
+ *
+ * Dialog that can combine multiple #Mode into one view.
+ *
+ * This mode uses the following options from the #config object:
+ *  * #Settings::combi_modes
+ *
+ * It creates the following option:
+ *  * Settings::display_combi
+ *
+ * @{
  */
 
-#include "dialogs/combi.h"
-#include "dialogs/dmenu.h"
-#include "dialogs/drun.h"
-#include "dialogs/filebrowser.h"
-#include "dialogs/help-keys.h"
-#include "dialogs/run.h"
-#include "dialogs/script.h"
-#include "dialogs/ssh.h"
-#include "dialogs/window.h"
-#endif // ROFI_DIALOGS_DIALOGS_H
+/** #Mode object representing the combi dialog. */
+extern Mode combi_mode;
+
+/**@}*/
+#endif // ROFI_MODE_COMBI_H

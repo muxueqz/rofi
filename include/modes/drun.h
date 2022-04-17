@@ -25,27 +25,19 @@
  *
  */
 
-#ifndef ROFI_DIALOG_COMBI_H
-#define ROFI_DIALOG_COMBI_H
+#ifndef ROFI_MODE_DRUN_H
+#define ROFI_MODE_DRUN_H
+
 #include "mode.h"
 
 /**
- * @defgroup COBIMode Combi
+ * @defgroup DRUNMode DRun
  * @ingroup MODES
- *
- * Dialog that can combine multiple #Mode into one view.
- *
- * This mode uses the following options from the #config object:
- *  * #Settings::combi_modi
- *
- * It creates the following option:
- *  * Settings::display_combi
- *
  * @{
  */
-
-/** #Mode object representing the combi dialog. */
-extern Mode combi_mode;
-
+#ifdef ENABLE_DRUN
+/** #Mode object representing the desktop menu run dialog. */
+extern Mode drun_mode;
+#endif // ENABLE_DRUN
 /**@}*/
-#endif // ROFI_DIALOG_COMBI_H
+#endif // ROFI_MODE_DRUN_H

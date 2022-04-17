@@ -2,7 +2,7 @@
 
 ## NAME
 
-**rofi script mode** - Rofi format for scriptable modi.
+**rofi script mode** - Rofi format for scriptable mode.
 
 
 ## DESCRIPTION
@@ -18,7 +18,7 @@ To specify a script mode, set a mode with the following syntax: "{name}:{executa
 For example:
 
 ```
-rofi -show fb -modi "fb:file_browser.sh"
+rofi -show fb -modes "fb:file_browser.sh"
 ```
 
 The name should be unique.
@@ -63,6 +63,10 @@ An integer number with the current state:
 
 Environment get set when selected entry get set with the property value of the 'info' row option, if set.
 
+### `ROFI_DATA`
+
+Environment get set when script sets `data` option in header.
+
 ## Passing mode options
 
 Extra options, like setting the prompt, can be set by the script.
@@ -84,6 +88,7 @@ The following extra options exists:
  * **delim**:       Set the delimiter for for next rows. Default is '\n' and this option should finish with this. Only call this on first call of script, it is remembered for consecutive calls.
  * **no-custom**:   If set to 'true'; only accept listed entries, ignore custom input.
  * **use-hot-keys**: If set to true, it enabled the Custom keybindings for script. Warning this breaks the normal rofi flow.
+ * **data**:         Passed data to the next execution of the script via **ROFI_DATA**.
 
 ## Parsing row options
 
@@ -137,7 +142,7 @@ Qball Cow <qball@gmpclient.org>
 
 Rasmus Steinke <rasi@xssn.at>
 
-Quentin Glidic <sardemff7+rofi@sardemff7.net>
+Morgane Glidic <sardemff7+rofi@sardemff7.net>
 
 
 Original code based on work by: Sean Pringle <sean.pringle@gmail.com>

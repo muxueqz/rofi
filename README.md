@@ -42,7 +42,7 @@ Rofi is not:
 # Table of Contents
 
 - [Features](#features)
-- [Modi](#modi)
+- [Modes](#modes)
 - [Manpages](#manpage)
 - [Installation](#installation)
 - [Quickstart](#quickstart) 
@@ -81,12 +81,12 @@ Its main features are:
 *   Easily extensible using scripts and plugins
 *   Advanced Theming
 
-# Modi
+# Modes
 
-**Rofi** has several built-in modi implementing common use cases and can be extended by scripts (either called from
+**Rofi** has several built-in modes implementing common use cases and can be extended by scripts (either called from
 **Rofi** or calling **Rofi**) or plugins.
 
-Below is a list of the different modi:
+Below is a list of the different modes:
 
 * **run**: launch applications from $PATH, with option to launch in terminal.
 * **drun**: launch applications based on desktop files. It tries to be compliant to the XDG standard.
@@ -95,7 +95,7 @@ Below is a list of the different modi:
 * **file-browser**: A basic file-browser for opening files.
 * **keys**: list internal keybindings.
 * **script**: Write (limited) custom mode using simple scripts.
-* **combi**: Combine multiple modi into one.
+* **combi**: Combine multiple modes into one.
 
 **Rofi** is known to work on Linux and BSD.
 
@@ -130,13 +130,16 @@ To force the use of the xcb backend (if enabled during build), the `-x11` option
 
 # Manpage
 
-For more up to date information, please see the manpages. The other sections and links might have outdated information as they have relatively less maintainance than the manpages. So, if you come across any issues please consult manpages, [discussion](https://github.com/davatorium/rofi/discussions) and [issue traker](https://github.com/davatorium/rofi/issues?q=) before filing new issue.
+For more up to date information, please see the manpages. The other sections and links might have outdated information as they have relatively less maintainance than the manpages. So, if you come across any issues please consult manpages, [discussion](https://github.com/davatorium/rofi/discussions) and [issue tracker](https://github.com/davatorium/rofi/issues?q=) before filing new issue.
 
  * Manpages:
      * [rofi](doc/rofi.1.markdown)
      * [rofi-theme](doc/rofi-theme.5.markdown)
+     * [rofi-debugging](doc/rofi-debugging.5.markdown)
      * [rofi-script](doc/rofi-script.5.markdown)
      * [rofi-theme-selector](doc/rofi-theme-selector.1.markdown)
+     * [rofi-keys](doc/rofi-keys.5.markdown)
+     * [rofi-dmenu](doc/rofi-dmenu.5.markdown)
 
 # Installation
 
@@ -165,14 +168,14 @@ Enabled modes can be changed at runtime. Default key is `Ctrl+Tab`.
 If no modes are specified, all configured modes will be enabled.
 To only show the `run` and `ssh` launcher:
 
-    rofi -modi "run,ssh" -show run
+    rofi -modes "run,ssh" -show run
 
 
-The modi to combine in combi mode.
-For syntax to `-combi-modi`, see `-modi`.
+The modes to combine in combi mode.
+For syntax to `-combi-modes `, see `-modes`.
 To get one merge view, of `window`,`run`, and `ssh`:
 
-    rofi -show combi -combi-modi "window,run,ssh" -modi combi
+    rofi -show combi -combi-modes "window,run,ssh" -modes combi
 
 ## Configuration
 
@@ -216,7 +219,6 @@ Default theme:
 
 #### Contents
 
-* [Debugging](https://github.com/davatorium/rofi/wiki/Debugging-Rofi)
 * [User scripts](https://github.com/davatorium/rofi/wiki/User-scripts)
 * [Examples](https://github.com/davatorium/rofi/wiki#examples)
 * [dmenu Specs](https://github.com/davatorium/rofi/wiki/dmenu_specs)

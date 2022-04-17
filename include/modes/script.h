@@ -25,24 +25,34 @@
  *
  */
 
-#ifndef ROFI_DIALOG_WINDOW_H
-#define ROFI_DIALOG_WINDOW_H
-#include "mode.h"
+#ifndef ROFI_MODE_SCRIPT_H
+#define ROFI_MODE_SCRIPT_H
 
 #include "mode.h"
 
 /**
- * @defgroup WINDOWMode Window
+ * @defgroup SCRIPTMode Script
  * @ingroup MODES
  *
  * @{
  */
-#ifdef WINDOW_MODE
+/**
+ * @param str   The input string to parse
+ *
+ * Parse an argument string into the right ScriptOptions data object.
+ * This is off format: \<Name\>:\<Script\>
+ *
+ * @returns NULL when it fails, a newly allocated ScriptOptions when successful.
+ */
+Mode *script_mode_parse_setup(const char *str);
 
-extern Mode window_mode;
-extern Mode window_mode_cd;
-
-void window_client_handle_signal(xcb_window_t win, gboolean create);
-#endif // WINDOW_MODE
-/** @}*/
-#endif // ROFI_DIALOG_WINDOW_H
+/**
+ * @param token The modes str to check
+ *
+ * Check if token could be a valid script modes.
+ *
+ * @returns true when valid.
+ */
+gboolean script_mode_is_valid(const char *token);
+/**@}*/
+#endif // ROFI_MODE_SCRIPT_H

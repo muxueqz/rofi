@@ -25,22 +25,27 @@
  *
  */
 
-#ifndef ROFI_DIALOG_HELPKEYS_H
-#define ROFI_DIALOG_HELPKEYS_H
-#include "mode.h"
+#ifndef ROFI_MODE_DMENU_H
+#define ROFI_MODE_DMENU_H
 
-#include "mode.h"
 /**
- * @defgroup HELPKEYSMode KeysHelp
+ * @defgroup DMENU DMenu
  * @ingroup MODES
  *
- * Displays the different keybindings available in *rofi*
  *
  * @{
  */
 /**
- * #Mode object representing the help key mode view
+ * dmenu dialog.
+ *
+ * @returns TRUE if script was successful.
  */
-extern Mode help_keys_mode;
+int dmenu_mode_dialog(void);
+
+/**
+ * Print dmenu mode commandline options to stdout, for use in help menu.
+ */
+void print_dmenu_options(void);
+
 /**@}*/
-#endif // ROFI_DIALOG_HELPKEYS_H
+#endif // ROFI_MODE_DMENU_H

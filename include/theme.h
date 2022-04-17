@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -411,6 +411,11 @@ char *rofi_theme_parse_prepare_file(const char *file, const char *parent_file);
  * Process conditionals.
  */
 void rofi_theme_parse_process_conditionals(void);
+
+/**
+ * Process links.
+ */
+void rofi_theme_parse_process_links(void);
 
 /**
  * @param parent target theme tree

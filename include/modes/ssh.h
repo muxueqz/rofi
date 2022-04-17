@@ -25,35 +25,26 @@
  *
  */
 
-#ifndef ROFI_DIALOG_SCRIPT_H
-#define ROFI_DIALOG_SCRIPT_H
+#ifndef ROFI_MODE_SSH_H
+#define ROFI_MODE_SSH_H
 #include "mode.h"
-
-#include "mode.h"
-
 /**
- * @defgroup SCRIPTMode Script
+ * @defgroup SSHMode SSH
  * @ingroup MODES
+ *
+ * SSH Mode, returns a list of known SSH hosts the user can log into.
+ * It does this by parsing the SSH config file and optional the known host  and
+ * host list It also keeps history of the last chosen hosts.
+ *
+ * This mode uses the following options from the #config object:
+ *  * #Settings::ssh_command
+ *  * #Settings::parse_known_hosts
+ *  * #Settings::parse_hosts
  *
  * @{
  */
-/**
- * @param str   The input string to parse
- *
- * Parse an argument string into the right ScriptOptions data object.
- * This is off format: \<Name\>:\<Script\>
- *
- * @returns NULL when it fails, a newly allocated ScriptOptions when successful.
- */
-Mode *script_mode_parse_setup(const char *str);
 
-/**
- * @param token The modi str to check
- *
- * Check if token could be a valid script modi.
- *
- * @returns true when valid.
- */
-gboolean script_mode_is_valid(const char *token);
+/** #Mode object representing the ssh mode. */
+extern Mode ssh_mode;
 /**@}*/
-#endif // ROFI_DIALOG_SCRIPT_H
+#endif // ROFI_MODE_SSH_H

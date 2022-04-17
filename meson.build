@@ -129,7 +129,9 @@ nk_options = [
 nk = subproject('libnkutils', default_options: nk_options)
 nk_subproject_options = nk.get_variable('nk_options')
 foreach o : nk_options + nk_subproject_options
-    if not nk_options.contains(o) or not nk_subproject_options.contains(o)
+    if ( o.startswith('git-work-tree=') )
+        continue
+    elif not nk_options.contains(o) or not nk_subproject_options.contains(o)
         error('You must not change libnkutils options @0@ != @1@'.format('|'.join(nk_options), '|'.join(nk_subproject_options)))
     endif
 endforeach
@@ -157,7 +159,7 @@ flex = generator(find_program('flex'),
 )
 bison = generator(find_program('bison'),
     output: [ '@BASENAME@.c', '@BASENAME@.h' ],
-    arguments: [ '--verbose', '-d', '@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@' ]
+    arguments: [ '--report=all', '--report-file=bison.log', '-Wall', '--verbose', '-d', '@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@' ]
 )
 
 rofi_sources = files(
@@ -182,14 +184,14 @@ rofi_sources = files(
         'source/widgets/scrollbar.c',
         'source/xrmoptions.c',
         'source/rofi-types.c',
-        'source/dialogs/run.c',
-        'source/dialogs/ssh.c',
-        'source/dialogs/drun.c',
-        'source/dialogs/dmenu.c',
-        'source/dialogs/combi.c',
-        'source/dialogs/script.c',
-        'source/dialogs/help-keys.c',
-        'source/dialogs/filebrowser.c',
+        'source/modes/run.c',
+        'source/modes/ssh.c',
+        'source/modes/drun.c',
+        'source/modes/dmenu.c',
+        'source/modes/combi.c',
+        'source/modes/script.c',
+        'source/modes/help-keys.c',
+        'source/modes/filebrowser.c',
         'include/display.h',
         'include/xcb.h',
         'include/rofi.h',
@@ -216,23 +218,23 @@ rofi_sources = files(
         'include/widgets/listview.h',
         'include/widgets/scrollbar.h',
         'include/xrmoptions.h',
-        'include/dialogs/ssh.h',
-        'include/dialogs/run.h',
-        'include/dialogs/drun.h',
-        'include/dialogs/dmenu.h',
-        'include/dialogs/combi.h',
-        'include/dialogs/script.h',
-        'include/dialogs/dialogs.h',
-        'include/dialogs/help-keys.h',
-        'include/dialogs/filebrowser.h',
-        'include/dialogs/dmenuscriptshared.h',
+        'include/modes/ssh.h',
+        'include/modes/run.h',
+        'include/modes/drun.h',
+        'include/modes/dmenu.h',
+        'include/modes/combi.h',
+        'include/modes/script.h',
+        'include/modes/modes.h',
+        'include/modes/help-keys.h',
+        'include/modes/filebrowser.h',
+        'include/modes/dmenuscriptshared.h',
 )
 if xcb_enabled
     rofi_sources += files(
-        'source/dialogs/window.c',
+        'source/modes/window.c',
         'source/xcb/display.c',
         'source/xcb/view.c',
-        'include/dialogs/window.h',
+        'include/modes/window.h',
         'include/xcb-internal.h',
     )
 endif
@@ -297,6 +299,7 @@ install_man(
     'doc/rofi-sensible-terminal.1',
     'doc/rofi-script.5',
     'doc/rofi-theme.5',
+    'doc/rofi-debugging.5',
     'doc/rofi-dmenu.5',
     'doc/rofi-keys.5',
 )
@@ -517,7 +520,7 @@ if check.found()
         ],
         objects: rofi.extract_objects([
             'config/config.c',
-            'source/dialogs/help-keys.c',
+            'source/modes/help-keys.c',
             'source/helper.c',
             'source/theme.c',
             'source/css-colors.c',
