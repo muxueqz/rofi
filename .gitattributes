@@ -4,7 +4,6 @@
 .gitlab-ci.yml export-ignore
 .travis.yml export-ignore
 .github export-ignore
-data export-ignore
 releasenotes export-ignore
 doc/*.png export-ignore
 doc/help-output.txt export-ignore
