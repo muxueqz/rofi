@@ -111,6 +111,9 @@ struct RofiViewState {
   /** filtered rows */
   textbox *tb_filtered_rows;
 
+  textbox *tb_current_entry;
+  icon *icon_current_entry;
+
   /** Settings of the menu */
   MenuFlags menu_flags;
   /** If mouse was within view previously */
@@ -193,6 +196,9 @@ struct _rofi_view_cache_state {
   MenuFlags flags;
   /** List of stacked views */
   GQueue views;
+  /** timeout for reloading */
+  guint refilter_timeout;
+  guint refilter_timeout_count;
   /** User timeout */
   guint user_timeout;
 };

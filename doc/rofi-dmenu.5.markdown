@@ -158,13 +158,6 @@ Force **rofi** mode to first read all data from stdin before showing the selecti
 Note: the default asynchronous mode will also be automatically disabled if used with conflicting options,
 such as `-dump`, `-only-match` or `-auto-select`.
 
-`-async-pre-read` *number*
-
-Reads the first *number* entries blocking, then switches to async mode.
-This makes it feel more 'snappy'.
-
-*default*: 25
-
 `-window-title` *title*
 
 Set name used for the window title. Will be shown as Rofi - *title*
@@ -197,7 +190,7 @@ The column separator. This is a regex.
 
 ## SEE ALSO
 
-rofi(1), rofi-sensible-terminal(1), dmenu(1), rofi-theme(5), rofi-script(5), rofi-theme-selector(1)
+rofi(1), rofi-sensible-terminal(1), dmenu(1), rofi-theme(5), rofi-script(5), rofi-theme-selector(1), ascii(7)
 
 ## AUTHOR
 

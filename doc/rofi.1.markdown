@@ -258,10 +258,6 @@ Specify icon theme to be used.
 If not specified default theme from DE is used, *Adwaita* and *gnome* themes act as
 fallback themes.
 
-`-application-fallback-icon`
-
-Specify an icon to be used when the application icon in run/drun are not yet loaded or is not available.
-
 `-markup`
 
 Use Pango markup to format output wherever possible.
@@ -273,6 +269,33 @@ Make **rofi** react like a normal application window. Useful for scripts like Cl
 `-[no-]steal-focus`
 
 Make rofi steal focus on launch and restore close to window that held it when launched.
+
+`-refilter-timeout-limit`
+
+The limit of elements that is used to switch from instant to delayed filter mode.
+
+  Default: 8192
+
+A fallback icon can be specified for each mode:
+
+```css
+configuration {
+    <mode>{
+      fallback-icon: "<icon name>";
+    }
+}
+```
+Example
+
+```css
+configuration {
+    run,drun {
+      fallback-icon: "application-x-addon";
+    }
+}
+```
+
+
 
 ### Matching
 
@@ -594,7 +617,7 @@ Pango markup can be used to formatting the output.
 
     Default: {mode} {text}
 
-Note: This setting is ignored if `combi-hide-mode-prefix` is eanbled.
+Note: This setting is ignored if `combi-hide-mode-prefix` is enabled.
 
 
 ### History and Sorting
@@ -948,7 +971,7 @@ first.
 
 ## SEE ALSO
 
-**rofi-sensible-terminal(1)**, **dmenu(1)**, **rofi-debugging(5)**, **rofi-theme(5)**, **rofi-script(5)**, **rofi-keys(5)**,**rofi-theme-selector(1)**
+**rofi-sensible-terminal(1)**, **dmenu(1)**, **rofi-debugging(5)**, **rofi-theme(5)**, **rofi-script(5)**, **rofi-keys(5)**,**rofi-theme-selector(1)**,**rofi-dmenu(5)**
 
 ## AUTHOR
 

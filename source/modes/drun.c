@@ -129,6 +129,7 @@ typedef struct {
   gint sort_index;
   /* UID for the icon to display */
   uint32_t icon_fetch_uid;
+  uint32_t icon_fetch_size;
   /* Type of desktop file */
   DRunDesktopEntryType type;
 } DRunModeEntry;
@@ -212,10 +213,6 @@ struct _DRunModePrivateData {
   char *old_completer_input;
   uint32_t selected_line;
   char *old_input;
-
-  /** fallback icon */
-  uint32_t fallback_icon_fetch_uid;
-  cairo_surface_t *fallback_icon;
 };
 
 struct RegexEvalArg {
@@ -623,6 +620,7 @@ static void read_desktop_file(DRunModePrivateData *pd, const char *root,
   }
   pd->entry_list[pd->cmd_list_length].icon_size = 0;
   pd->entry_list[pd->cmd_list_length].icon_fetch_uid = 0;
+  pd->entry_list[pd->cmd_list_length].icon_fetch_size = 0;
   pd->entry_list[pd->cmd_list_length].root = g_strdup(root);
   pd->entry_list[pd->cmd_list_length].path = g_strdup(path);
   pd->entry_list[pd->cmd_list_length].desktop_id = g_strdup(id);
@@ -1330,17 +1328,6 @@ static char *_get_display_value(const Mode *sw, unsigned int selected_line,
   return retv;
 }
 
-static cairo_surface_t *fallback_icon(DRunModePrivateData *pd, int height) {
-  if (config.application_fallback_icon) {
-    // FALLBACK
-    if (pd->fallback_icon_fetch_uid > 0) {
-      return rofi_icon_fetcher_get(pd->fallback_icon_fetch_uid);
-    }
-    pd->fallback_icon_fetch_uid =
-        rofi_icon_fetcher_query(config.application_fallback_icon, height);
-  }
-  return NULL;
-}
 static cairo_surface_t *_get_icon(const Mode *sw, unsigned int selected_line,
                                   int height) {
   DRunModePrivateData *pd = (DRunModePrivateData *)mode_get_private_data(sw);
@@ -1350,20 +1337,16 @@ static cairo_surface_t *_get_icon(const Mode *sw, unsigned int selected_line,
   g_return_val_if_fail(pd->entry_list != NULL, NULL);
   DRunModeEntry *dr = &(pd->entry_list[selected_line]);
   if (dr->icon_name != NULL) {
-    if (dr->icon_fetch_uid > 0) {
+    if (dr->icon_fetch_uid > 0 && dr->icon_fetch_size == height) {
       cairo_surface_t *icon = rofi_icon_fetcher_get(dr->icon_fetch_uid);
-      if (icon) {
-        return icon;
-      }
-      return fallback_icon(pd, height);
-    }
-    dr->icon_fetch_uid = rofi_icon_fetcher_query(dr->icon_name, height);
-    cairo_surface_t *icon = rofi_icon_fetcher_get(dr->icon_fetch_uid);
-    if (icon) {
       return icon;
     }
+    dr->icon_fetch_uid = rofi_icon_fetcher_query(dr->icon_name, height);
+    dr->icon_fetch_size = height;
+    cairo_surface_t *icon = rofi_icon_fetcher_get(dr->icon_fetch_uid);
+    return icon;
   }
-  return fallback_icon(pd, height);
+  return NULL;
 }
 
 static char *drun_get_completion(const Mode *sw, unsigned int index) {

@@ -76,6 +76,8 @@ struct _rofi_view_cache_state CacheState = {
     .main_window = XCB_WINDOW_NONE,
     .flags = MENU_NORMAL,
     .views = G_QUEUE_INIT,
+    .refilter_timeout = 0,
+    .refilter_timeout_count = 0,
     .user_timeout = 0,
 };
 
@@ -427,7 +429,34 @@ inline static void rofi_view_nav_last(RofiViewState *state) {
   // state->selected = state->filtered_lines - 1;
   listview_set_selected(state->list_view, -1);
 }
+static void selection_changed_callback(listview *lv, unsigned int index,
+                                       void *udata) {
+  RofiViewState *state = (RofiViewState *)udata;
+  if (state->tb_current_entry) {
+    if (index < state->filtered_lines) {
+      int fstate = 0;
+      char *text = mode_get_display_value(state->sw, state->line_map[index],
+                                          &fstate, NULL, TRUE);
+      textbox_text(state->tb_current_entry, text);
+      g_free(text);
 
+    } else {
+      textbox_text(state->tb_current_entry, "");
+    }
+  }
+  if (state->icon_current_entry) {
+    if (index < state->filtered_lines) {
+      int icon_height =
+          widget_get_desired_height(WIDGET(state->icon_current_entry),
+                                    WIDGET(state->icon_current_entry)->w);
+      cairo_surface_t *icon =
+          mode_get_icon(state->sw, state->line_map[index], icon_height);
+      icon_set_surface(state->icon_current_entry, icon);
+    } else {
+      icon_set_surface(state->icon_current_entry, NULL);
+    }
+  }
+}
 static void update_callback(textbox *t, icon *ico, unsigned int index,
                             void *udata, TextBoxFontType *type, gboolean full) {
   RofiViewState *state = (RofiViewState *)udata;
@@ -437,39 +466,43 @@ static void update_callback(textbox *t, icon *ico, unsigned int index,
     char *text = mode_get_display_value(state->sw, state->line_map[index],
                                         &fstate, &add_list, TRUE);
     (*type) |= fstate;
-    // TODO needed for markup.
-    textbox_font(t, *type);
-    // Move into list view.
-    textbox_text(t, text);
-    PangoAttrList *list = textbox_get_pango_attributes(t);
-    if (list != NULL) {
-      pango_attr_list_ref(list);
-    } else {
-      list = pango_attr_list_new();
-    }
+
     if (ico) {
       int icon_height = widget_get_desired_height(WIDGET(ico), WIDGET(ico)->w);
       cairo_surface_t *icon =
           mode_get_icon(state->sw, state->line_map[index], icon_height);
       icon_set_surface(ico, icon);
     }
+    if (t) {
+      // TODO needed for markup.
+      textbox_font(t, *type);
+      // Move into list view.
+      textbox_text(t, text);
+      PangoAttrList *list = textbox_get_pango_attributes(t);
+      if (list != NULL) {
+        pango_attr_list_ref(list);
+      } else {
+        list = pango_attr_list_new();
+      }
 
-    if (state->tokens) {
-      RofiHighlightColorStyle th = {ROFI_HL_BOLD | ROFI_HL_UNDERLINE,
-                                    {0.0, 0.0, 0.0, 0.0}};
-      th = rofi_theme_get_highlight(WIDGET(t), "highlight", th);
-      helper_token_match_get_pango_attr(th, state->tokens,
-                                        textbox_get_visible_text(t), list);
+      if (state->tokens) {
+        RofiHighlightColorStyle th = {ROFI_HL_BOLD | ROFI_HL_UNDERLINE,
+                                      {0.0, 0.0, 0.0, 0.0}};
+        th = rofi_theme_get_highlight(WIDGET(t), "highlight", th);
+        helper_token_match_get_pango_attr(th, state->tokens,
+                                          textbox_get_visible_text(t), list);
+      }
+      for (GList *iter = g_list_first(add_list); iter != NULL;
+           iter = g_list_next(iter)) {
+        pango_attr_list_insert(list, (PangoAttribute *)(iter->data));
+      }
+      textbox_set_pango_attributes(t, list);
+      pango_attr_list_unref(list);
     }
-    for (GList *iter = g_list_first(add_list); iter != NULL;
-         iter = g_list_next(iter)) {
-      pango_attr_list_insert(list, (PangoAttribute *)(iter->data));
-    }
-    textbox_set_pango_attributes(t, list);
-    pango_attr_list_unref(list);
     g_list_free(add_list);
     g_free(text);
   } else {
+    // Never called.
     int fstate = 0;
     mode_get_display_value(state->sw, state->line_map[index], &fstate, NULL,
                            FALSE);
@@ -489,9 +522,11 @@ static void _rofi_view_reload_row(RofiViewState *state) {
   rofi_view_reload_message_bar(state);
 }
 
-void rofi_view_refilter(RofiViewState *state) {
+static gboolean rofi_view_refilter_real(RofiViewState *state) {
+  CacheState.refilter_timeout = 0;
+  CacheState.refilter_timeout_count = 0;
   if (state->sw == NULL) {
-    return;
+    return G_SOURCE_REMOVE;
   }
   TICK_N("Filter start");
   if (state->reload) {
@@ -505,6 +540,8 @@ void rofi_view_refilter(RofiViewState *state) {
   }
   TICK_N("Filter tokenize");
   if (state->text && strlen(state->text->text) > 0) {
+
+    listview_set_filtered(state->list_view, TRUE);
     unsigned int j = 0;
     gchar *pattern = mode_preprocess_input(state->sw, state->text->text);
     glong plen = pattern ? g_utf8_strlen(pattern, -1) : 0;
@@ -517,6 +554,9 @@ void rofi_view_refilter(RofiViewState *state) {
      * speedup of the whole function.
      */
     unsigned int nt = MAX(1, state->num_lines / 500);
+    // Limit the number of jobs, it could cause stack overflow if we don´t
+    // limit.
+    nt = MIN(nt, config.threads * 4);
     thread_state_view states[nt];
     GCond cond;
     GMutex mutex;
@@ -567,6 +607,7 @@ void rofi_view_refilter(RofiViewState *state) {
     state->filtered_lines = j;
     g_free(pattern);
   } else {
+    listview_set_filtered(state->list_view, FALSE);
     for (unsigned int i = 0; i < state->num_lines; i++) {
       state->line_map[i] = i;
     }
@@ -606,6 +647,33 @@ void rofi_view_refilter(RofiViewState *state) {
   TICK_N("Filter resize window based on window ");
   state->refilter = FALSE;
   TICK_N("Filter done");
+  rofi_view_update(state, TRUE);
+  return G_SOURCE_REMOVE;
+}
+void rofi_view_refilter(RofiViewState *state) {
+  CacheState.refilter_timeout_count++;
+  if (CacheState.refilter_timeout != 0) {
+
+    g_source_remove(CacheState.refilter_timeout);
+    CacheState.refilter_timeout = 0;
+  }
+  if (state->num_lines > config.refilter_timeout_limit &&
+      CacheState.refilter_timeout_count < 25 && state->text &&
+      strlen(state->text->text) > 0) {
+    CacheState.refilter_timeout =
+        g_timeout_add(200, (GSourceFunc)rofi_view_refilter_real, state);
+  } else {
+    rofi_view_refilter_real(state);
+  }
+}
+static void rofi_view_refilter_force(RofiViewState *state) {
+  if (CacheState.refilter_timeout != 0) {
+    g_source_remove(CacheState.refilter_timeout);
+    CacheState.refilter_timeout = 0;
+  }
+  if (state->refilter) {
+    rofi_view_refilter_real(state);
+  }
 }
 /**
  * @param state The Menu Handle
@@ -843,6 +911,7 @@ static void rofi_view_trigger_global_action(KeyBindingAction action) {
     break;
   }
   case ACCEPT_ALT: {
+    rofi_view_refilter_force(state);
     unsigned int selected = listview_get_selected(state->list_view);
     state->selected_line = UINT32_MAX;
     if (selected < state->filtered_lines) {
@@ -857,18 +926,21 @@ static void rofi_view_trigger_global_action(KeyBindingAction action) {
     break;
   }
   case ACCEPT_CUSTOM: {
+    rofi_view_refilter_force(state);
     state->selected_line = UINT32_MAX;
     state->retv = MENU_CUSTOM_INPUT;
     state->quit = TRUE;
     break;
   }
   case ACCEPT_CUSTOM_ALT: {
+    rofi_view_refilter_force(state);
     state->selected_line = UINT32_MAX;
     state->retv = MENU_CUSTOM_INPUT | MENU_CUSTOM_ACTION;
     state->quit = TRUE;
     break;
   }
   case ACCEPT_ENTRY: {
+    rofi_view_refilter_force(state);
     // If a valid item is selected, return that..
     unsigned int selected = listview_get_selected(state->list_view);
     state->selected_line = UINT32_MAX;
@@ -1139,6 +1211,16 @@ static void rofi_view_add_widget(RofiViewState *state, widget *parent_widget,
                        TB_AUTOWIDTH | TB_AUTOHEIGHT, NORMAL, "", 0, 0);
     box_add((box *)parent_widget, WIDGET(state->tb_filtered_rows), FALSE);
     defaults = NULL;
+  } else if (strcmp(name, "textbox-current-entry") == 0) {
+    state->tb_current_entry =
+        textbox_create(parent_widget, WIDGET_TYPE_TEXTBOX_TEXT, name,
+                       TB_MARKUP | TB_AUTOHEIGHT, NORMAL, "", 0, 0);
+    box_add((box *)parent_widget, WIDGET(state->tb_current_entry), FALSE);
+    defaults = NULL;
+  } else if (strcmp(name, "icon-current-entry") == 0) {
+    state->icon_current_entry = icon_create(parent_widget, name);
+    box_add((box *)parent_widget, WIDGET(state->icon_current_entry), FALSE);
+    defaults = NULL;
   }
   /**
    * CASE INDICATOR
@@ -1197,6 +1279,8 @@ static void rofi_view_add_widget(RofiViewState *state, widget *parent_widget,
     }
     state->list_view = listview_create(parent_widget, name, update_callback,
                                        state, config.element_height, 0);
+    listview_set_selection_changed_callback(
+        state->list_view, selection_changed_callback, (void *)state);
     box_add((box *)parent_widget, WIDGET(state->list_view), TRUE);
     // Set configuration
     listview_set_multi_select(state->list_view,

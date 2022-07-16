@@ -186,6 +186,13 @@ static gboolean wayland_rofi_view_reload_idle(G_GNUC_UNUSED gpointer data) {
   RofiViewState *state = rofi_view_get_active();
 
   if (state) {
+    // For UI update on this.
+    if (state->tb_total_rows) {
+      char *r =
+          g_strdup_printf("%u", mode_get_num_entries(state->sw));
+      textbox_text(state->tb_total_rows, r);
+      g_free(r);
+    }
     state->reload = TRUE;
     state->refilter = TRUE;
 
@@ -368,6 +375,7 @@ static void wayland_rofi_view_maybe_update(RofiViewState *state) {
     rofi_view_refilter(state);
   }
   wayland_rofi_view_update(state, TRUE);
+  return;
 }
 
 static void wayland_rofi_view_frame_callback(void) {
@@ -405,6 +413,14 @@ static void wayland_rofi_view_cleanup() {
   if (WlState.idle_timeout > 0) {
     g_source_remove(WlState.idle_timeout);
     WlState.idle_timeout = 0;
+  }
+  if (CacheState.user_timeout > 0) {
+    g_source_remove(CacheState.user_timeout);
+    CacheState.user_timeout = 0;
+  }
+  if (CacheState.refilter_timeout > 0) {
+    g_source_remove(CacheState.refilter_timeout);
+    CacheState.refilter_timeout = 0;
   }
   if (WlState.repaint_source > 0) {
     g_source_remove(WlState.repaint_source);

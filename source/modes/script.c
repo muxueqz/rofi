@@ -67,6 +67,7 @@ typedef struct {
   char *prompt;
   char *data;
   gboolean do_markup;
+  gboolean keep_selection;
   char delim;
   /** no custom */
   gboolean no_custom;
@@ -135,9 +136,16 @@ static void parse_header_entry(Mode *sw, char *line, ssize_t length) {
       pd->no_custom = (strcasecmp(value, "true") == 0);
     } else if (strcasecmp(line, "use-hot-keys") == 0) {
       pd->use_hot_keys = (strcasecmp(value, "true") == 0);
+    } else if (strcasecmp(line, "keep-selection") == 0) {
+      pd->keep_selection = (strcasecmp(value, "true") == 0);
     } else if (strcasecmp(line, "data") == 0) {
       g_free(pd->data);
       pd->data = g_strdup(value);
+    } else if (strcasecmp(line, "theme") == 0) {
+      if (rofi_theme_parse_string((const char *)value)) {
+        g_warning("Failed to parse: '%s'", value);
+        rofi_clear_error_messages();
+      }
     }
   }
 }
@@ -219,6 +227,7 @@ static DmenuScriptEntry *execute_executor(Mode *sw, char *arg,
             retv[(*length)].meta = NULL;
             retv[(*length)].info = NULL;
             retv[(*length)].icon_fetch_uid = 0;
+            retv[(*length)].icon_fetch_size = 0;
             retv[(*length)].nonselectable = FALSE;
             if (buf_length > 0 && (read_length > (ssize_t)buf_length)) {
               dmenuscript_parse_entry_extras(sw, &(retv[(*length)]),
@@ -333,7 +342,11 @@ static ModeMode script_mode_result(Mode *sw, int mretv, char **input,
 
     rmpd->cmd_list = new_list;
     rmpd->cmd_list_length = new_length;
-    retv = RESET_DIALOG;
+    if (rmpd->keep_selection) {
+      retv = RELOAD_DIALOG;
+    } else {
+      retv = RESET_DIALOG;
+    }
   }
   return retv;
 }
@@ -425,15 +438,87 @@ script_get_icon(const Mode *sw, unsigned int selected_line, int height) {
   if (dr->icon_name == NULL) {
     return NULL;
   }
-  if (dr->icon_fetch_uid > 0) {
+  if (dr->icon_fetch_uid > 0 && dr->icon_fetch_size == height) {
     return rofi_icon_fetcher_get(dr->icon_fetch_uid);
   }
   dr->icon_fetch_uid = rofi_icon_fetcher_query(dr->icon_name, height);
+  dr->icon_fetch_size = height;
   return rofi_icon_fetcher_get(dr->icon_fetch_uid);
 }
 
 #include "mode-private.h"
+
+typedef struct ScriptUser {
+  char *name;
+  char *path;
+} ScriptUser;
+
+ScriptUser *user_scripts = NULL;
+int num_scripts = 0;
+
+void script_mode_cleanup(void) {
+  for (size_t i = 0; i < num_scripts; i++) {
+    g_free(user_scripts[i].name);
+    g_free(user_scripts[i].path);
+  }
+  g_free(user_scripts);
+}
+void script_mode_gather_user_scripts(void) {
+  const char *cpath = g_get_user_config_dir();
+  char *script_dir = g_build_filename(cpath, "rofi", "scripts", NULL);
+  if (g_file_test(script_dir, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR) ==
+      FALSE) {
+    g_free(script_dir);
+    return;
+  }
+  GDir *sd = g_dir_open(script_dir, 0, NULL);
+  if (sd) {
+    const char *file = NULL;
+    while ((file = g_dir_read_name(sd)) != NULL) {
+      char *sp = g_build_filename(cpath, "rofi", "scripts", file, NULL);
+      user_scripts =
+          g_realloc(user_scripts, sizeof(ScriptUser) * (num_scripts + 1));
+      user_scripts[num_scripts].path = sp;
+      user_scripts[num_scripts].name = g_strdup(file);
+      char *dot = strrchr(user_scripts[num_scripts].name, '.');
+      if (dot) {
+        *dot = '\0';
+      }
+      num_scripts++;
+    }
+  }
+
+  g_free(script_dir);
+}
+
+static int script_mode_has_user_script(char const *const user) {
+
+  for (int i = 0; i < num_scripts; i++) {
+    if (g_strcmp0(user_scripts[i].name, user) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 Mode *script_mode_parse_setup(const char *str) {
+  int ui = 0;
+  if ((ui = script_mode_has_user_script(str)) >= 0) {
+    Mode *sw = g_malloc0(sizeof(*sw));
+    sw->name = g_strdup(user_scripts[ui].name);
+    sw->ed = g_strdup(user_scripts[ui].path);
+    sw->free = script_switcher_free;
+    sw->_init = script_mode_init;
+    sw->_get_num_entries = script_mode_get_num_entries;
+    sw->_result = script_mode_result;
+    sw->_destroy = script_mode_destroy;
+    sw->_token_match = script_token_match;
+    sw->_get_message = script_get_message;
+    sw->_get_icon = script_get_icon;
+    sw->_get_completion = NULL, sw->_preprocess_input = NULL,
+    sw->_get_display_value = _get_display_value;
+    return sw;
+  }
   Mode *sw = g_malloc0(sizeof(*sw));
   char *endp = NULL;
   char *parse = g_strdup(str);
@@ -472,5 +557,17 @@ Mode *script_mode_parse_setup(const char *str) {
 }
 
 gboolean script_mode_is_valid(const char *token) {
+  if (script_mode_has_user_script(token) >= 0) {
+    return TRUE;
+  }
   return strchr(token, ':') != NULL;
+}
+
+void script_user_list(gboolean is_term) {
+
+  for (unsigned int i = 0; i < num_scripts; i++) {
+    printf("        • %s%s%s (%s)\n", is_term ? (color_bold) : "",
+           user_scripts[i].name, is_term ? color_reset : "",
+           user_scripts[i].path);
+  }
 }

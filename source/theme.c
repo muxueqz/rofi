@@ -1533,6 +1533,15 @@ static void rofi_theme_parse_process_conditionals_int(workarea mon,
         }
         break;
       }
+      case THEME_MEDIA_TYPE_BOOLEAN: {
+        if (widget->media->boolv) {
+          for (unsigned int x = 0; x < widget->num_widgets; x++) {
+            rofi_theme_parse_merge_widgets(rwidget, widget->widgets[x]);
+          }
+        }
+        break;
+      }
+
       default: {
         break;
       }
@@ -1579,9 +1588,11 @@ static void rofi_theme_parse_process_links_int(ThemeWidget *wid) {
           if (pv->value.link.ref == pv) {
             char *n = rofi_theme_widget_get_name(widget);
             GString *str = g_string_new(NULL);
-            g_string_printf(
-                str, "Failed to resolve variable '%s' in: `%s { %s: var(%s);}`",
-                pv->value.link.name, n, pv->name, pv->value.link.name);
+            g_string_printf(str,
+                            "Validating the theme failed: the variable '%s' in "
+                            "`%s { %s: var(%s);}` failed to resolve.",
+                            pv->value.link.name, n, pv->name,
+                            pv->value.link.name);
 
             rofi_add_error_message(str);
             g_free(n);
@@ -1623,6 +1634,9 @@ ThemeMediaType rofi_theme_parse_media_type(const char *type) {
   }
   if (g_strcmp0(type, "max-aspect-ratio") == 0) {
     return THEME_MEDIA_TYPE_MAX_ASPECT_RATIO;
+  }
+  if (g_strcmp0(type, "enabled") == 0) {
+    return THEME_MEDIA_TYPE_BOOLEAN;
   }
   return THEME_MEDIA_TYPE_INVALID;
 }

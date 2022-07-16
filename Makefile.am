@@ -202,7 +202,6 @@ theme_DATA=\
 		   themes/Arc.rasi\
 		   themes/Arc-Dark.rasi\
 		   themes/DarkBlue.rasi\
-		   themes/Pop-Dark.rasi\
 		   themes/Indego.rasi\
 		   themes/Monokai.rasi\
 		   themes/Paper.rasi\
@@ -224,6 +223,7 @@ theme_DATA=\
 		   themes/paper-float.rasi\
 		   themes/purple.rasi\
 		   themes/sidebar.rasi\
+		   themes/sidebar-v2.rasi\
 		   themes/solarized.rasi\
 		   themes/solarized_alternate.rasi\
 		   themes/fancy.rasi\
@@ -626,6 +626,15 @@ coverage-clean:
 .PHONY: .FORCE
 .FORCE:
 
+icondir=$(datadir)/icons/hicolor/apps/
+icon_DATA=\
+	data/rofi.svg
+
+desktopdir=$(datadir)/applications/
+desktop_DATA=\
+	data/rofi.desktop\
+	data/rofi-theme-selector.desktop
+
 EXTRA_DIST += \
 	doc/meson.build \
 	subprojects/libgwater/mpd/meson.build \
@@ -649,5 +658,9 @@ EXTRA_DIST += \
 	subprojects/libgwater/alsa-mixer/libgwater-alsa-mixer.h \
 	subprojects/libgwater/alsa-mixer/libgwater-alsa-mixer.c \
 	doc/meson_build_manpages.sh \
+	data/rofi.png\
 	meson_options.txt \
 	meson.build
+
+EXTRA_DIST += ${desktop_DATA}\
+							${icon_DATA}

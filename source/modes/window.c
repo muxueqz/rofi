@@ -125,6 +125,7 @@ typedef struct {
   cairo_surface_t *icon;
   gboolean icon_checked;
   uint32_t icon_fetch_uid;
+  uint32_t icon_fetch_size;
   gboolean thumbnail_checked;
 } client;
 
@@ -932,7 +933,7 @@ static cairo_user_data_key_t data_key;
  * \param data The image's data in ARGB format, will be copied by this function.
  */
 static cairo_surface_t *draw_surface_from_data(int width, int height,
-                                               uint32_t *data) {
+                                               uint32_t const *const data) {
   unsigned long int len = width * height;
   unsigned long int i;
   uint32_t *buffer = g_new0(uint32_t, len);
@@ -1028,6 +1029,14 @@ static cairo_surface_t *_get_icon(const Mode *sw, unsigned int selected_line,
   if (c == NULL) {
     return NULL;
   }
+  if (c->icon_fetch_size != size) {
+    if (c->icon) {
+      cairo_surface_destroy(c->icon);
+      c->icon = NULL;
+    }
+    c->thumbnail_checked = FALSE;
+    c->icon_checked = FALSE;
+  }
   if (config.window_thumbnail && c->thumbnail_checked == FALSE) {
     c->icon = x11_helper_get_screenshot_surface_window(c->window, size);
     c->thumbnail_checked = TRUE;
@@ -1043,8 +1052,10 @@ static cairo_surface_t *_get_icon(const Mode *sw, unsigned int selected_line,
     char *class_lower = g_utf8_strdown(c->class, -1);
     c->icon_fetch_uid = rofi_icon_fetcher_query(class_lower, size);
     g_free(class_lower);
+    c->icon_fetch_size = size;
     return rofi_icon_fetcher_get(c->icon_fetch_uid);
   }
+  c->icon_fetch_size = size;
   return c->icon;
 }
 

@@ -159,7 +159,7 @@ static void xcb_rofi_view_capture_screenshot(void) {
   if (outp == NULL) {
     int index = 0;
     fpath = g_build_filename(xdg_pict_dir, filename, NULL);
-    while (g_file_test(fpath, G_FILE_TEST_EXISTS) && index < 99) {
+    while (g_file_test(fpath, G_FILE_TEST_EXISTS) && index < 99999) {
       g_free(fpath);
       g_free(filename);
       // Try the next index.
@@ -234,6 +234,7 @@ static gboolean xcb_rofi_view_repaint(G_GNUC_UNUSED void *data) {
     // Repaint the view (if needed).
     // After a resize the edit_pixmap surface might not contain anything
     // anymore. If we already re-painted, this does nothing.
+
     rofi_view_update(state, FALSE);
     g_debug("expose event");
     TICK_N("Expose");
@@ -302,6 +303,7 @@ static void xcb_rofi_view_maybe_update(RofiViewState *state) {
     rofi_view_refilter(state);
   }
   rofi_view_update(state, TRUE);
+  return;
 }
 
 /**
@@ -323,19 +325,8 @@ static const int loc_transtable[9] = {
 static void xcb_rofi_view_calculate_window_position(RofiViewState *state) {
   int location = rofi_theme_get_position(WIDGET(state->main_window), "location",
                                          loc_transtable[config.location]);
-  int anchor = location;
-  if (!listview_get_fixed_num_lines(state->list_view)) {
-    anchor = location;
-    if (location == WL_CENTER) {
-      anchor = WL_NORTH;
-    } else if (location == WL_EAST) {
-      anchor = WL_NORTH_EAST;
-    } else if (location == WL_WEST) {
-      anchor = WL_NORTH_WEST;
-    }
-  }
-  anchor =
-      rofi_theme_get_position(WIDGET(state->main_window), "anchor", anchor);
+  int anchor =
+      rofi_theme_get_position(WIDGET(state->main_window), "anchor", location);
 
   if (XcbState.fullscreen) {
     state->x = XcbState.mon.x;
@@ -494,6 +485,13 @@ static gboolean xcb_rofi_view_reload_idle(G_GNUC_UNUSED gpointer data) {
   RofiViewState *state = rofi_view_get_active();
 
   if (state) {
+    // For UI update on this.
+    if (state->tb_total_rows) {
+      char *r =
+          g_strdup_printf("%u", mode_get_num_entries(state->sw));
+      textbox_text(state->tb_total_rows, r);
+      g_free(r);
+    }
     state->reload = TRUE;
     state->refilter = TRUE;
     xcb_rofi_view_queue_redraw();
@@ -845,6 +843,10 @@ static void xcb_rofi_view_cleanup() {
   if (CacheState.user_timeout > 0) {
     g_source_remove(CacheState.user_timeout);
     CacheState.user_timeout = 0;
+  }
+  if (CacheState.refilter_timeout > 0) {
+    g_source_remove(CacheState.refilter_timeout);
+    CacheState.refilter_timeout = 0;
   }
   if (XcbState.repaint_source > 0) {
     g_source_remove(XcbState.repaint_source);

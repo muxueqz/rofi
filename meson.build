@@ -29,8 +29,10 @@ foreach f : flags
     endif
 endforeach
 
-plugindir = join_paths(get_option('libdir'), meson.project_name())
-themedir = join_paths(get_option('datadir'), meson.project_name(), 'themes')
+plugindir  = join_paths(get_option('libdir'), meson.project_name())
+themedir   = join_paths(get_option('datadir'), meson.project_name(), 'themes')
+desktop_install_dir = join_paths(get_option('datadir'), 'applications')
+icondir    = join_paths(get_option('datadir'), 'icons','hicolor', 'scalable', 'apps')
 
 glib_min_major=2
 glib_min_minor=40
@@ -151,6 +153,16 @@ install_data(
     'script/rofi-sensible-terminal',
     'script/rofi-theme-selector',
     install_dir: join_paths(get_option('prefix'), get_option('bindir'))
+)
+
+install_data(
+  'data/rofi-theme-selector.desktop',
+  'data/rofi.desktop',
+  install_dir: desktop_install_dir
+  )
+install_data(
+  'data/rofi.svg',
+  install_dir: icondir
 )
 
 flex = generator(find_program('flex'),
@@ -309,7 +321,6 @@ install_data(
     'themes/Arc.rasi',
     'themes/Arc-Dark.rasi',
     'themes/DarkBlue.rasi',
-    'themes/Pop-Dark.rasi',
     'themes/Indego.rasi',
     'themes/Monokai.rasi',
     'themes/Paper.rasi',
@@ -331,6 +342,7 @@ install_data(
     'themes/paper-float.rasi',
     'themes/purple.rasi',
     'themes/sidebar.rasi',
+    'themes/sidebar-v2.rasi',
     'themes/solarized.rasi',
     'themes/solarized_alternate.rasi',
     'themes/fancy.rasi',

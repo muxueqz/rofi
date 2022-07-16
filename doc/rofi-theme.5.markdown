@@ -773,6 +773,8 @@ The current widgets available in **rofi**:
       * `entry`: the main entry @textbox
       * `num-rows`: Shows the total number of rows.
       * `num-filtered-rows`: Shows the total number of rows after filtering.
+      * `textbox-current-entry`: Shows the text of the currently selected entry.
+      * `icon-current-entry`: Shows the icon of the currently selected entry.
     * `listview`: The listview.
        * `scrollbar`: the listview scrollbar
        * `element`: a box in the listview holding the entries
@@ -1306,12 +1308,19 @@ It supports the following keys as constraint:
  * `min-aspect-ratio`   load when aspect ratio is over value.
  * `max-aspect-ratio`:  load when aspect ratio is under value.
  * `monitor-id`:        The monitor id, see rofi -help for id's.
+ * `enabled`:           Boolean option to enable. Supports environment variable.
 
 @media takes an integer number or a fraction, for integer number `px` can be added.
 
 
 ```
 @media ( min-width: 120 px ) {
+
+}
+```
+
+```
+@media ( enabled: env(DO_LIGHT, false ) {
 
 }
 ```

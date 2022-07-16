@@ -84,6 +84,7 @@ typedef struct {
   char *path;
   enum FBFileType type;
   uint32_t icon_fetch_uid;
+  uint32_t icon_fetch_size;
   gboolean link;
   time_t time;
 } FBFile;
@@ -234,6 +235,7 @@ static void get_file_browser(Mode *sw) {
         pd->array[pd->array_length].path = NULL;
         pd->array[pd->array_length].type = UP;
         pd->array[pd->array_length].icon_fetch_uid = 0;
+        pd->array[pd->array_length].icon_fetch_size = 0;
         pd->array[pd->array_length].link = FALSE;
         pd->array[pd->array_length].time = -1;
         pd->array_length++;
@@ -265,6 +267,7 @@ static void get_file_browser(Mode *sw) {
         pd->array[pd->array_length].type =
             (rd->d_type == DT_DIR) ? DIRECTORY : RFILE;
         pd->array[pd->array_length].icon_fetch_uid = 0;
+        pd->array[pd->array_length].icon_fetch_size = 0;
         pd->array[pd->array_length].link = FALSE;
 
         if (file_browser_config.sorting_method == FB_SORT_TIME) {
@@ -284,6 +287,7 @@ static void get_file_browser(Mode *sw) {
         pd->array[pd->array_length].path =
             g_build_filename(cdir, rd->d_name, NULL);
         pd->array[pd->array_length].icon_fetch_uid = 0;
+        pd->array[pd->array_length].icon_fetch_size = 0;
         pd->array[pd->array_length].link = TRUE;
         // Default to file.
         pd->array[pd->array_length].type = RFILE;
@@ -473,22 +477,34 @@ static ModeMode file_browser_mode_result(Mode *sw, int mretv, char **input,
       }
     }
     retv = RELOAD_DIALOG;
-  } else if ((mretv & MENU_CUSTOM_INPUT) && *input) {
-    char *p = rofi_expand_path(*input);
-    char *dir = g_filename_from_utf8(p, -1, NULL, NULL, NULL);
-    g_free(p);
-    if (g_file_test(dir, G_FILE_TEST_EXISTS)) {
-      if (g_file_test(dir, G_FILE_TEST_IS_DIR)) {
+  } else if ((mretv & MENU_CUSTOM_INPUT)) {
+    if (special_command) {
+      GFile *new = g_file_get_parent(pd->current_dir);
+      if (new) {
         g_object_unref(pd->current_dir);
-        pd->current_dir = g_file_new_for_path(dir);
-        g_free(dir);
+        pd->current_dir = new;
         free_list(pd);
         get_file_browser(sw);
-        return RESET_DIALOG;
       }
+      return RESET_DIALOG;
     }
-    g_free(dir);
-    retv = RELOAD_DIALOG;
+    if (*input) {
+      char *p = rofi_expand_path(*input);
+      char *dir = g_filename_from_utf8(p, -1, NULL, NULL, NULL);
+      g_free(p);
+      if (g_file_test(dir, G_FILE_TEST_EXISTS)) {
+        if (g_file_test(dir, G_FILE_TEST_IS_DIR)) {
+          g_object_unref(pd->current_dir);
+          pd->current_dir = g_file_new_for_path(dir);
+          g_free(dir);
+          free_list(pd);
+          get_file_browser(sw);
+          return RESET_DIALOG;
+        }
+      }
+      g_free(dir);
+      retv = RELOAD_DIALOG;
+    }
   } else if ((mretv & MENU_ENTRY_DELETE) == MENU_ENTRY_DELETE) {
     retv = RELOAD_DIALOG;
   }
@@ -550,7 +566,7 @@ static cairo_surface_t *_get_icon(const Mode *sw, unsigned int selected_line,
       (FileBrowserModePrivateData *)mode_get_private_data(sw);
   g_return_val_if_fail(pd->array != NULL, NULL);
   FBFile *dr = &(pd->array[selected_line]);
-  if (dr->icon_fetch_uid > 0) {
+  if (dr->icon_fetch_uid > 0 && dr->icon_fetch_size == height) {
     return rofi_icon_fetcher_get(dr->icon_fetch_uid);
   }
   if (rofi_icon_fetcher_file_is_image(dr->path)) {
@@ -558,6 +574,7 @@ static cairo_surface_t *_get_icon(const Mode *sw, unsigned int selected_line,
   } else {
     dr->icon_fetch_uid = rofi_icon_fetcher_query(icon_name[dr->type], height);
   }
+  dr->icon_fetch_size = height;
   return rofi_icon_fetcher_get(dr->icon_fetch_uid);
 }
 

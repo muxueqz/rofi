@@ -1244,6 +1244,10 @@ The current widgets available in \fBrofi\fP:
 \fB\fCnum-rows\fR: Shows the total number of rows.
 .IP \(bu 2
 \fB\fCnum-filtered-rows\fR: Shows the total number of rows after filtering.
+.IP \(bu 2
+\fB\fCtextbox-current-entry\fR: Shows the text of the currently selected entry.
+.IP \(bu 2
+\fB\fCicon-current-entry\fR: Shows the icon of the currently selected entry.
 
 .RE
 
@@ -2037,6 +2041,8 @@ It supports the following keys as constraint:
 \fB\fCmax-aspect-ratio\fR:  load when aspect ratio is under value.
 .IP \(bu 2
 \fB\fCmonitor-id\fR:        The monitor id, see rofi -help for id's.
+.IP \(bu 2
+\fB\fCenabled\fR:           Boolean option to enable. Supports environment variable.
 
 .RE
 
@@ -2048,6 +2054,17 @@ It supports the following keys as constraint:
 
 .nf
 @media ( min-width: 120 px ) {
+
+}
+
+.fi
+.RE
+
+.PP
+.RS
+
+.nf
+@media ( enabled: env(DO_LIGHT, false ) {
 
 }
 

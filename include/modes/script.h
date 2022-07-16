@@ -54,5 +54,21 @@ Mode *script_mode_parse_setup(const char *str);
  * @returns true when valid.
  */
 gboolean script_mode_is_valid(const char *token);
+
+/**
+ * Gather the users scripts from `~/.config/rofi/scripts/`
+ */
+void script_mode_gather_user_scripts(void);
+
+/**
+ * Cleanup memory allocated by `script_mode_gather_user_scripts`
+ */
+void script_mode_cleanup(void);
+/**
+ * @param is_term if printed to terminal
+ *
+ * List the user scripts found.
+ */
+void script_user_list(gboolean is_term);
 /**@}*/
 #endif // ROFI_MODE_SCRIPT_H
