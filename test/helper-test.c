@@ -30,7 +30,6 @@
 #include "rofi.h"
 #include "settings.h"
 #include "theme.h"
-#include "xcb-internal.h"
 #include "xcb.h"
 #include <assert.h>
 #include <glib.h>

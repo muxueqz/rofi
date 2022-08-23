@@ -26,13 +26,10 @@
  */
 
 #include "display.h"
-#include "xcb.h"
-#include "xcb-internal.h"
 #include "rofi-icon-fetcher.h"
 #include "rofi.h"
 #include "settings.h"
 #include "widgets/textbox.h"
-#include "xcb-internal.h"
 #include "xcb.h"
 #include <assert.h>
 #include <glib.h>

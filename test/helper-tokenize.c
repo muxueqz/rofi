@@ -32,7 +32,6 @@
 #include "settings.h"
 #include "theme.h"
 #include "widgets/textbox.h"
-#include "xcb-internal.h"
 #include "xcb.h"
 #include <assert.h>
 #include <glib.h>
