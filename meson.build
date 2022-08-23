@@ -1,5 +1,5 @@
 project('rofi', 'c',
-    version: '1.7.3+wayland1-dev',
+    version: '1.7.4+wayland1',
     meson_version: '>=0.47.0',
     license: [ 'MIT' ],
     default_options: [
@@ -22,6 +22,7 @@ flags = [
     '-Wunreachable-code',
     '-Werror=missing-prototypes',
     '-Wno-inline', # A bit too noisy with Bison…
+    '-Wextra'
 ]
 foreach f : flags
     if c_compiler.has_argument(f)

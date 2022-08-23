@@ -81,6 +81,7 @@ const char *cache_dir = NULL;
 
 /** List of error messages.*/
 GList *list_of_error_msgs = NULL;
+GList *list_of_warning_msgs = NULL;
 
 static void rofi_collectmodes_destroy(void);
 void rofi_add_error_message(GString *str) {
@@ -94,6 +95,19 @@ void rofi_clear_error_messages(void) {
     }
     g_list_free(list_of_error_msgs);
     list_of_error_msgs = NULL;
+  }
+}
+void rofi_add_warning_message(GString *str) {
+  list_of_warning_msgs = g_list_append(list_of_warning_msgs, str);
+}
+void rofi_clear_warning_messages(void) {
+  if (list_of_warning_msgs) {
+    for (GList *iter = g_list_first(list_of_warning_msgs); iter != NULL;
+         iter = g_list_next(iter)) {
+      g_string_free((GString *)iter->data, TRUE);
+    }
+    g_list_free(list_of_warning_msgs);
+    list_of_warning_msgs = NULL;
   }
 }
 
@@ -273,6 +287,8 @@ static void print_list_of_modes(int is_term) {
   }
 }
 static void print_main_application_options(int is_term) {
+  print_help_msg("-config", "[file]", "Load an alternative configuration.",
+                 NULL, is_term);
   print_help_msg("-no-config", "",
                  "Do not load configuration, use default values.", NULL,
                  is_term);
@@ -328,6 +344,7 @@ static void help(G_GNUC_UNUSED int argc, char **argv) {
   script_user_list(is_term);
   printf("\n");
   printf("Compile time options:\n");
+  printf("\t• Pango   version %s\n", pango_version_string());
 #ifdef WINDOW_MODE
   printf("\t• window  %senabled%s\n", is_term ? color_green : "",
          is_term ? color_reset : "");
@@ -471,6 +488,7 @@ static void cleanup(void) {
   g_free(config_path);
 
   rofi_clear_error_messages();
+  rofi_clear_warning_messages();
 
   if (rofi_theme) {
     rofi_theme_free(rofi_theme);
@@ -719,6 +737,13 @@ static gboolean startup(G_GNUC_UNUSED gpointer data) {
     show_error_dialog();
     return G_SOURCE_REMOVE;
   }
+  if (list_of_warning_msgs != NULL) {
+    for (GList *iter = g_list_first(list_of_warning_msgs); iter != NULL;
+         iter = g_list_next(iter)) {
+      fputs(((GString *)iter->data)->str, stderr);
+      fputs("\n", stderr);
+    }
+  }
   // Dmenu mode.
   if (dmenu_mode == TRUE) {
     // force off sidebar mode:
@@ -771,7 +796,7 @@ static gboolean record(G_GNUC_UNUSED void *data) {
   return G_SOURCE_CONTINUE;
 }
 static void rofi_custom_log_function(const char *log_domain,
-                                     GLogLevelFlags log_level,
+                                     G_GNUC_UNUSED GLogLevelFlags log_level,
                                      const gchar *message, gpointer user_data) {
   int fp = GPOINTER_TO_INT(user_data);
   dprintf(fp, "[%s]: %s\n", log_domain == NULL ? "default" : log_domain,
@@ -1145,11 +1170,16 @@ extern GList *list_of_error_msgs;
 int rofi_theme_rasi_validate(const char *filename) {
   rofi_theme_parse_file(filename);
   rofi_theme_parse_process_links();
-  if (list_of_error_msgs == NULL) {
+  if (list_of_error_msgs == NULL && list_of_warning_msgs == NULL) {
     return EXIT_SUCCESS;
   }
 
   for (GList *iter = g_list_first(list_of_error_msgs); iter != NULL;
+       iter = g_list_next(iter)) {
+    fputs(((GString *)iter->data)->str, stderr);
+    fputs("\n", stderr);
+  }
+  for (GList *iter = g_list_first(list_of_warning_msgs); iter != NULL;
        iter = g_list_next(iter)) {
     fputs(((GString *)iter->data)->str, stderr);
     fputs("\n", stderr);

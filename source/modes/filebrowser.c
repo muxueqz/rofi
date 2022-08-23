@@ -50,6 +50,12 @@
 
 #define FILEBROWSER_CACHE_FILE "rofi3.filebrowsercache"
 
+#if defined(__APPLE__)
+#define st_atim st_atimespec
+#define st_ctim st_ctimespec
+#define st_mtim st_mtimespec
+#endif
+
 /**
  * The internal data structure holding the private data of the TEST Mode.
  */
@@ -561,7 +567,7 @@ static int file_browser_token_match(const Mode *sw, rofi_int_matcher **tokens,
 }
 
 static cairo_surface_t *_get_icon(const Mode *sw, unsigned int selected_line,
-                                  int height) {
+                                  unsigned int height) {
   FileBrowserModePrivateData *pd =
       (FileBrowserModePrivateData *)mode_get_private_data(sw);
   g_return_val_if_fail(pd->array != NULL, NULL);

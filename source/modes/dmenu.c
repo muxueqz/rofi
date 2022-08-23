@@ -56,8 +56,8 @@
 static int dmenu_mode_init(Mode *sw);
 static int dmenu_token_match(const Mode *sw, rofi_int_matcher **tokens,
                              unsigned int index);
-static cairo_surface_t *dmenu_get_icon(const Mode *sw,
-                                       unsigned int selected_line, int height);
+static cairo_surface_t *
+dmenu_get_icon(const Mode *sw, unsigned int selected_line, unsigned int height);
 static char *dmenu_get_message(const Mode *sw);
 
 static inline unsigned int bitget(uint32_t const *const array,
@@ -108,6 +108,9 @@ typedef struct {
   int pipefd2[2];
   guint wake_source;
   gboolean loading;
+
+  char *ballot_selected;
+  char *ballot_unselected;
 } DmenuModePrivateData;
 
 #define BLOCK_LINES_SIZE 2048
@@ -192,9 +195,13 @@ static gboolean dmenu_async_read_proc(gint fd, GIOCondition condition,
                                       gpointer user_data) {
   DmenuModePrivateData *pd = (DmenuModePrivateData *)user_data;
   char command;
+  // Only interrested in read events.
+  if ((condition & G_IO_IN) != G_IO_IN) {
+    return G_SOURCE_CONTINUE;
+  }
   // Read the entry from the pipe that was used to signal this action.
   if (read(fd, &command, 1) == 1) {
-    if ( command == 'r' ){
+    if (command == 'r') {
       Block *block = NULL;
       gboolean changed = FALSE;
       // Empty out the AsyncQueue (that is thread safe) from all blocks pushed
@@ -204,10 +211,10 @@ static gboolean dmenu_async_read_proc(gint fd, GIOCondition condition,
         if (pd->cmd_list_real_length < (pd->cmd_list_length + block->length)) {
           pd->cmd_list_real_length = MAX(pd->cmd_list_real_length * 2, 4096);
           pd->cmd_list = g_realloc(pd->cmd_list, sizeof(DmenuScriptEntry) *
-              pd->cmd_list_real_length);
+                                                     pd->cmd_list_real_length);
         }
         memcpy(&(pd->cmd_list[pd->cmd_list_length]), &(block->values[0]),
-            sizeof(DmenuScriptEntry) * block->length);
+               sizeof(DmenuScriptEntry) * block->length);
         pd->cmd_list_length += block->length;
         g_free(block);
         changed = TRUE;
@@ -215,8 +222,8 @@ static gboolean dmenu_async_read_proc(gint fd, GIOCondition condition,
       if (changed) {
         rofi_view_reload();
       }
-    } else if ( command == 'q' ){
-      if ( pd->loading ) {
+    } else if (command == 'q') {
+      if (pd->loading) {
         rofi_view_set_overlay(rofi_view_get_active(), NULL);
       }
     }
@@ -239,7 +246,7 @@ static void read_input_sync(DmenuModePrivateData *pd, unsigned int pre_read) {
 static gpointer read_input_thread(gpointer userdata) {
   DmenuModePrivateData *pd = (DmenuModePrivateData *)userdata;
   ssize_t nread = 0;
-  size_t len = 0;
+  ssize_t len = 0;
   char *line = NULL;
   // Create the message passing queue to the UI thread.
   pd->async_queue = g_async_queue_new();
@@ -276,7 +283,7 @@ static gpointer read_input_thread(gpointer userdata) {
         if (readbytes > 0) {
           nread += readbytes;
           line[nread] = '\0';
-          size_t i = 0;
+          ssize_t i = 0;
           while (i < nread) {
             if (line[i] == pd->separator) {
               line[i] = '\0';
@@ -334,8 +341,17 @@ static unsigned int dmenu_mode_get_num_entries(const Mode *sw) {
 }
 
 static gchar *dmenu_format_output_string(const DmenuModePrivateData *pd,
-                                         const char *input) {
+                                         const char *input,
+                                         const unsigned int index,
+                                         gboolean multi_select) {
   if (pd->columns == NULL) {
+    if (multi_select) {
+      if (pd->selected_list && bitget(pd->selected_list, index) == TRUE) {
+        return g_strdup_printf("%s%s", pd->ballot_selected, input);
+      } else {
+        return g_strdup_printf("%s%s", pd->ballot_unselected, input);
+      }
+    }
     return g_strdup(input);
   }
   char *retv = NULL;
@@ -346,6 +362,14 @@ static gchar *dmenu_format_output_string(const DmenuModePrivateData *pd,
     ;
   }
   GString *str_retv = g_string_new("");
+
+  if (multi_select) {
+    if (pd->selected_list && bitget(pd->selected_list, index) == TRUE) {
+      g_string_append(str_retv, pd->ballot_selected);
+    } else {
+      g_string_append(str_retv, pd->ballot_unselected);
+    }
+  }
   for (uint32_t i = 0; pd->columns && pd->columns[i]; i++) {
     unsigned int index =
         (unsigned int)g_ascii_strtoull(pd->columns[i], NULL, 10);
@@ -373,6 +397,13 @@ static inline unsigned int get_index(unsigned int length, int index) {
   }
   // Out of range.
   return UINT_MAX;
+}
+
+static char *dmenu_get_completion_data(const Mode *data, unsigned int index) {
+  Mode *sw = (Mode *)data;
+  DmenuModePrivateData *pd = (DmenuModePrivateData *)mode_get_private_data(sw);
+  DmenuScriptEntry *retv = (DmenuScriptEntry *)pd->cmd_list;
+  return dmenu_format_output_string(pd, retv[index].entry, index, FALSE);
 }
 
 static char *get_display_data(const Mode *data, unsigned int index, int *state,
@@ -403,7 +434,9 @@ static char *get_display_data(const Mode *data, unsigned int index, int *state,
     *state |= MARKUP;
   }
   char *my_retv =
-      (get_entry ? dmenu_format_output_string(pd, retv[index].entry) : NULL);
+      (get_entry ? dmenu_format_output_string(pd, retv[index].entry, index,
+                                              pd->multi_select)
+                 : NULL);
   return my_retv;
 }
 
@@ -443,7 +476,7 @@ Mode dmenu_mode = {.name = "dmenu",
                    ._token_match = dmenu_token_match,
                    ._get_display_value = get_display_data,
                    ._get_icon = dmenu_get_icon,
-                   ._get_completion = NULL,
+                   ._get_completion = dmenu_get_completion_data,
                    ._preprocess_input = NULL,
                    ._get_message = dmenu_get_message,
                    .private_data = NULL,
@@ -632,7 +665,8 @@ static char *dmenu_get_message(const Mode *sw) {
   return NULL;
 }
 static cairo_surface_t *dmenu_get_icon(const Mode *sw,
-                                       unsigned int selected_line, int height) {
+                                       unsigned int selected_line,
+                                       unsigned int height) {
   DmenuModePrivateData *pd = (DmenuModePrivateData *)mode_get_private_data(sw);
 
   g_return_val_if_fail(pd->cmd_list != NULL, NULL);
@@ -650,7 +684,8 @@ static cairo_surface_t *dmenu_get_icon(const Mode *sw,
   return rofi_icon_fetcher_get(uid);
 }
 
-static void dmenu_finish(DmenuModePrivateData *pd, RofiViewState *state, int retv) {
+static void dmenu_finish(DmenuModePrivateData *pd, RofiViewState *state,
+                         int retv) {
 
   if (pd->reading_thread) {
     // Stop listinig to new messages from reading thread.
@@ -779,7 +814,7 @@ static void dmenu_finalize(RofiViewState *state) {
     rofi_view_restart(state);
     rofi_view_set_selected_line(state, pd->selected_line);
     if (!restart) {
-      dmenu_finish(pd,state, retv);
+      dmenu_finish(pd, state, retv);
     }
     return;
   }
@@ -835,7 +870,7 @@ static void dmenu_finalize(RofiViewState *state) {
     rofi_view_restart(state);
     rofi_view_set_selected_line(state, pd->selected_line);
   } else {
-    dmenu_finish(pd,state, retv);
+    dmenu_finish(pd, state, retv);
   }
 }
 
@@ -850,8 +885,11 @@ int dmenu_mode_dialog(void) {
 
   pd->only_selected = FALSE;
   pd->multi_select = FALSE;
+  pd->ballot_selected = "☑ ";
+  pd->ballot_unselected = "☐ ";
+  find_arg_str("-ballot-selected-str", &(pd->ballot_selected));
+  find_arg_str("-ballot-unselected-str", &(pd->ballot_unselected));
   if (find_arg("-multi-select") >= 0) {
-    menu_flags = MENU_INDICATOR;
     pd->multi_select = TRUE;
   }
   if (find_arg("-markup-rows") >= 0) {
@@ -958,8 +996,16 @@ void print_dmenu_options(void) {
   print_help_msg("-w", "windowid", "Position over window with X11 windowid.",
                  NULL, is_term);
   print_help_msg("-keep-right", "", "Set ellipsize to end.", NULL, is_term);
-  print_help_msg("--display-columns", "", "Only show the selected columns",
-                 NULL, is_term);
-  print_help_msg("--display-column-separator", "\t",
+  print_help_msg("-display-columns", "", "Only show the selected columns", NULL,
+                 is_term);
+  print_help_msg("-display-column-separator", "\t",
                  "Separator to use to split columns (regex)", NULL, is_term);
+  print_help_msg("-ballot-selected-str", "\t",
+                 "When multi-select is enabled prefix this string when element "
+                 "is selected.",
+                 NULL, is_term);
+  print_help_msg("-ballot-unselected-str", "\t",
+                 "When multi-select is enabled prefix this string when element "
+                 "is not selected.",
+                 NULL, is_term);
 }

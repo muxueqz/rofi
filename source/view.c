@@ -114,14 +114,39 @@ static void rofi_view_update_prompt(RofiViewState *state) {
   }
 }
 
+
+extern GList *list_of_warning_msgs;
 static void rofi_view_reload_message_bar(RofiViewState *state) {
   if (state->mesg_box == NULL) {
     return;
   }
   char *msg = mode_get_message(state->sw);
-  if (msg) {
-    textbox_text(state->mesg_tb, msg);
+  if (msg || list_of_warning_msgs) {
+    /** we want to popin warning here. */
+
+    GString *emesg = g_string_new(msg);
+    if (list_of_warning_msgs) {
+      if (msg) {
+        g_string_append_c(emesg, '\n');
+      }
+      g_string_append(
+          emesg, "The following warnings were detected when starting rofi:\n");
+      GList *iter = g_list_first(list_of_warning_msgs);
+      int index = 0;
+      for (; iter != NULL && index < 2; iter = g_list_next(iter)) {
+        GString *msg = (GString *)(iter->data);
+        g_string_append(emesg, "\n\n");
+        g_string_append(emesg, msg->str);
+        index++;
+      }
+      if (g_list_length(iter) > 1) {
+        g_string_append_printf(emesg, "\nThere are <b>%u</b> more errors.",
+                               g_list_length(iter) - 1);
+      }
+    }
+    textbox_text(state->mesg_tb, emesg->str);
     widget_enable(WIDGET(state->mesg_box));
+    g_string_free(emesg, TRUE);
     g_free(msg);
   } else {
     widget_disable(WIDGET(state->mesg_box));
@@ -429,8 +454,8 @@ inline static void rofi_view_nav_last(RofiViewState *state) {
   // state->selected = state->filtered_lines - 1;
   listview_set_selected(state->list_view, -1);
 }
-static void selection_changed_callback(listview *lv, unsigned int index,
-                                       void *udata) {
+static void selection_changed_callback(G_GNUC_UNUSED listview *lv,
+                                       unsigned int index, void *udata) {
   RofiViewState *state = (RofiViewState *)udata;
   if (state->tb_current_entry) {
     if (index < state->filtered_lines) {
@@ -1282,10 +1307,6 @@ static void rofi_view_add_widget(RofiViewState *state, widget *parent_widget,
     listview_set_selection_changed_callback(
         state->list_view, selection_changed_callback, (void *)state);
     box_add((box *)parent_widget, WIDGET(state->list_view), TRUE);
-    // Set configuration
-    listview_set_multi_select(state->list_view,
-                              (state->menu_flags & MENU_INDICATOR) ==
-                                  MENU_INDICATOR);
     listview_set_scroll_type(state->list_view, config.scroll_method);
     listview_set_mouse_activated_cb(
         state->list_view, rofi_view_listview_mouse_activated_cb, state);

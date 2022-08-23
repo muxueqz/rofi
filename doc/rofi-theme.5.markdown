@@ -116,7 +116,7 @@ list of widget names.
 If you want to center the text relative to the icon, we can set this:
 
 ```css
-element-icon {
+element-text {
     vertical-align: 0.5;
 }
 ```
@@ -498,8 +498,18 @@ should be applied.
 
  * `bold`: make the text thicker then the surrounding text.
  * `italic`: put the highlighted text in script type (slanted).
- * `underline`: put a line under the highlighted text.
- * `strikethrough`: put a line through the highlighted text.
+ * `underline`: put a line under the text.
+ * `strikethrough`: put a line through the text.
+
+The following options are available on pango 1.50.0 and up:
+
+ * `uppercase`: Uppercase the text.
+ * `lowercase`: Lowercase the text.
+
+ The following option is disabled as pango crashes on this if there is eel
+ upsizing or wrapping. This will be re-enabled once fixed:
+
+ * `capitalize`: Capitalize the text.
 
 ## Line style
 
@@ -912,6 +922,7 @@ The following properties are currently supported:
 * **vertical-align**:    Vertical alignment of the text. A number between 0 (top) and 1 (bottom).
 * **horizontal-align**:  Horizontal alignment of the text. A number between 0 (left) and 1 (right).
 * **text-color**:        the text color to use.
+* **text-transform**:    text style {color} for the whole text.
 * **highlight**:         text style {color}.
     color is optional, multiple highlight styles can be added like: bold underline italic #000000;
     This option is only available on the `element-text` widget.
@@ -951,6 +962,8 @@ The following properties are currently supported:
     The order the elements are layed out.  Vertical is the original 'column' view.
 * **fixed-columns**:    boolean
     Do not reduce the number of columns shown when number of visible elements is not enough to fill them all.
+* **require-input**:    boolean
+    Listview requires user input to show up.
 
 Each element is a `box` called `element`. Each `element` can contain an `element-icon` and `element-text`.
 
@@ -1341,6 +1354,34 @@ Or
 ```
 FontAwesome 22
 ```
+
+## Icon Handling 
+
+Rofi supports 3 ways of specifying an icon:
+
+* Filename
+* icon-name, this is looked up via the icon-theme.
+* Markup String. It renders a string as an icon.
+
+
+For the first two options, GdkPixbuf is used to open and render the icons.
+This in general gives support for most required image formats.
+For the string option it uses Pango to render the string. The string needs to
+start with a `<span` tag, that allows you to set color and font.
+
+Markup string:
+
+```bash
+echo -en "testing\0icon\x1f<span color='red'>⏻</span>" | ./rofi -dmenu
+```
+
+Getting supported icon formats:
+
+```bash
+G_MESSAGES_DEBUG=Helpers.IconFetcher rofi
+```
+This uses the debug framework and prints out a list of supported image  file
+extensions.
 
 ## Multiple file handling
 

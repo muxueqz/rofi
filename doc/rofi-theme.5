@@ -173,7 +173,7 @@ If you want to center the text relative to the icon, we can set this:
 .RS
 
 .nf
-element-icon {
+element-text {
     vertical-align: 0.5;
 }
 
@@ -773,9 +773,30 @@ should be applied.
 .IP \(bu 2
 \fB\fCitalic\fR: put the highlighted text in script type (slanted).
 .IP \(bu 2
-\fB\fCunderline\fR: put a line under the highlighted text.
+\fB\fCunderline\fR: put a line under the text.
 .IP \(bu 2
-\fB\fCstrikethrough\fR: put a line through the highlighted text.
+\fB\fCstrikethrough\fR: put a line through the text.
+
+.RE
+
+.PP
+The following options are available on pango 1.50.0 and up:
+
+.RS
+.IP \(bu 2
+\fB\fCuppercase\fR: Uppercase the text.
+.IP \(bu 2
+\fB\fClowercase\fR: Lowercase the text.
+
+.RE
+
+.PP
+The following option is disabled as pango crashes on this if there is eel
+ upsizing or wrapping. This will be re-enabled once fixed:
+
+.RS
+.IP \(bu 2
+\fB\fCcapitalize\fR: Capitalize the text.
 
 .RE
 
@@ -1468,6 +1489,8 @@ The offset of the window to the anchor point, allowing you to push the window le
 .IP \(bu 2
 \fBtext-color\fP:        the text color to use.
 .IP \(bu 2
+\fBtext-transform\fP:    text style {color} for the whole text.
+.IP \(bu 2
 \fBhighlight\fP:         text style {color}.
 color is optional, multiple highlight styles can be added like: bold underline italic #000000;
 This option is only available on the \fB\fCelement-text\fR widget.
@@ -1529,6 +1552,9 @@ The order the elements are layed out.  Vertical is the original 'column' view.
 .IP \(bu 2
 \fBfixed-columns\fP:    boolean
 Do not reduce the number of columns shown when number of visible elements is not enough to fill them all.
+.IP \(bu 2
+\fBrequire-input\fP:    boolean
+Listview requires user input to show up.
 
 .RE
 
@@ -2098,6 +2124,54 @@ FontAwesome 22
 
 .fi
 .RE
+
+.SH Icon Handling
+.PP
+Rofi supports 3 ways of specifying an icon:
+
+.RS
+.IP \(bu 2
+Filename
+.IP \(bu 2
+icon-name, this is looked up via the icon-theme.
+.IP \(bu 2
+Markup String. It renders a string as an icon.
+
+.RE
+
+.PP
+For the first two options, GdkPixbuf is used to open and render the icons.
+This in general gives support for most required image formats.
+For the string option it uses Pango to render the string. The string needs to
+start with a \fB\fC<span\fR tag, that allows you to set color and font.
+
+.PP
+Markup string:
+
+.PP
+.RS
+
+.nf
+echo -en "testing\\0icon\\x1f<span color='red'>⏻</span>" | ./rofi -dmenu
+
+.fi
+.RE
+
+.PP
+Getting supported icon formats:
+
+.PP
+.RS
+
+.nf
+G_MESSAGES_DEBUG=Helpers.IconFetcher rofi
+
+.fi
+.RE
+
+.PP
+This uses the debug framework and prints out a list of supported image  file
+extensions.
 
 .SH Multiple file handling
 .PP

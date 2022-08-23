@@ -68,6 +68,7 @@ typedef struct {
   char *data;
   gboolean do_markup;
   gboolean keep_selection;
+  int64_t new_selection;
   char delim;
   /** no custom */
   gboolean no_custom;
@@ -138,6 +139,8 @@ static void parse_header_entry(Mode *sw, char *line, ssize_t length) {
       pd->use_hot_keys = (strcasecmp(value, "true") == 0);
     } else if (strcasecmp(line, "keep-selection") == 0) {
       pd->keep_selection = (strcasecmp(value, "true") == 0);
+    } else if (strcasecmp(line, "new-selection") == 0) {
+      pd->new_selection = (int64_t)g_ascii_strtoll(value, NULL, 0);
     } else if (strcasecmp(line, "data") == 0) {
       g_free(pd->data);
       pd->data = g_strdup(value);
@@ -160,7 +163,9 @@ static DmenuScriptEntry *execute_executor(Mode *sw, char *arg,
   char **argv = NULL;
   int argc = 0;
   *length = 0;
-
+  // Reset these between runs.
+  pd->new_selection = -1;
+  pd->keep_selection = -1;
   // Environment
   char **env = g_get_environ();
 
@@ -343,6 +348,15 @@ static ModeMode script_mode_result(Mode *sw, int mretv, char **input,
     rmpd->cmd_list = new_list;
     rmpd->cmd_list_length = new_length;
     if (rmpd->keep_selection) {
+      if (rmpd->new_selection >= 0 &&
+          rmpd->new_selection < rmpd->cmd_list_length) {
+        rofi_view_set_selected_line(rofi_view_get_active(),
+                                    rmpd->new_selection);
+      } else {
+        rofi_view_set_selected_line(rofi_view_get_active(), selected_line);
+      }
+      g_free(*input);
+      *input = NULL;
       retv = RELOAD_DIALOG;
     } else {
       retv = RESET_DIALOG;
@@ -429,8 +443,9 @@ static char *script_get_message(const Mode *sw) {
   ScriptModePrivateData *pd = sw->private_data;
   return g_strdup(pd->message);
 }
-static cairo_surface_t *
-script_get_icon(const Mode *sw, unsigned int selected_line, int height) {
+static cairo_surface_t *script_get_icon(const Mode *sw,
+                                        unsigned int selected_line,
+                                        unsigned int height) {
   ScriptModePrivateData *pd =
       (ScriptModePrivateData *)mode_get_private_data(sw);
   g_return_val_if_fail(pd->cmd_list != NULL, NULL);
@@ -454,7 +469,7 @@ typedef struct ScriptUser {
 } ScriptUser;
 
 ScriptUser *user_scripts = NULL;
-int num_scripts = 0;
+size_t num_scripts = 0;
 
 void script_mode_cleanup(void) {
   for (size_t i = 0; i < num_scripts; i++) {
@@ -493,7 +508,7 @@ void script_mode_gather_user_scripts(void) {
 
 static int script_mode_has_user_script(char const *const user) {
 
-  for (int i = 0; i < num_scripts; i++) {
+  for (size_t i = 0; i < num_scripts; i++) {
     if (g_strcmp0(user_scripts[i].name, user) == 0) {
       return i;
     }
