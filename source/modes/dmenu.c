@@ -237,6 +237,10 @@ static void read_input_sync(DmenuModePrivateData *pd, unsigned int pre_read) {
   char *line = NULL;
   while (pre_read > 0 &&
          (nread = getdelim(&line, &len, pd->separator, pd->fd_file)) != -1) {
+    if (line[nread - 1] == pd->separator) {
+      nread--;
+      line[nread] = '\0';
+    }
     read_add(pd, line, nread);
     pre_read--;
   }
@@ -252,6 +256,7 @@ static gpointer read_input_thread(gpointer userdata) {
   pd->async_queue = g_async_queue_new();
   Block *block = NULL;
 
+  GTimer *tim = g_timer_new();
   int fd = pd->fd;
   while (1) {
     // Wait for input from the input or from the main thread.
@@ -291,10 +296,14 @@ static gpointer read_input_thread(gpointer userdata) {
               memmove(&line[0], &line[i + 1], nread - (i + 1));
               nread -= (i + 1);
               i = 0;
-              if (block && block->length == BLOCK_LINES_SIZE) {
-                g_async_queue_push(pd->async_queue, block);
-                block = NULL;
-                write(pd->pipefd2[1], "r", 1);
+              if (block) {
+                double elapsed = g_timer_elapsed(tim, NULL);
+                if ( elapsed >= 0.1 || block->length == BLOCK_LINES_SIZE) {
+                  g_timer_start(tim);
+                  g_async_queue_push(pd->async_queue, block);
+                  block = NULL;
+                  write(pd->pipefd2[1], "r", 1);
+                }
               }
             } else {
               i++;
@@ -307,6 +316,7 @@ static gpointer read_input_thread(gpointer userdata) {
             read_add_block(pd, &block, line, nread);
           }
           if (block) {
+            g_timer_start(tim);
             g_async_queue_push(pd->async_queue, block);
             block = NULL;
             write(pd->pipefd2[1], "r", 1);
@@ -322,12 +332,14 @@ static gpointer read_input_thread(gpointer userdata) {
         nread = 0;
       }
       if (block) {
+        g_timer_start(tim);
         g_async_queue_push(pd->async_queue, block);
         block = NULL;
         write(pd->pipefd2[1], "r", 1);
       }
     }
   }
+  g_timer_destroy(tim);
   free(line);
   write(pd->pipefd2[1], "q", 1);
   return NULL;

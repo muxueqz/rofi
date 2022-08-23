@@ -235,6 +235,7 @@ static gboolean xcb_rofi_view_repaint(G_GNUC_UNUSED void *data) {
     // After a resize the edit_pixmap surface might not contain anything
     // anymore. If we already re-painted, this does nothing.
 
+    TICK_N("Update start");
     rofi_view_update(state, FALSE);
     g_debug("expose event");
     TICK_N("Expose");
@@ -504,7 +505,7 @@ static void xcb_rofi_view_reload(void) {
   // @TODO add check if current view is equal to the callee
   if (XcbState.idle_timeout == 0) {
     XcbState.idle_timeout =
-        g_timeout_add(1000 / 10, xcb_rofi_view_reload_idle, NULL);
+        g_timeout_add(1000 / 100, xcb_rofi_view_reload_idle, NULL);
   }
 }
 static void xcb_rofi_view_queue_redraw(void) {
@@ -804,6 +805,8 @@ static void xcb_rofi_view_temp_click_to_exit(RofiViewState *state,
 
 static void xcb_rofi_view_frame_callback(void) {
   if (XcbState.repaint_source == 0) {
+    XcbState.count++;
+    g_debug("redraw %llu", XcbState.count);
     XcbState.repaint_source = g_idle_add_full(
         G_PRIORITY_HIGH_IDLE, xcb_rofi_view_repaint, NULL, NULL);
   }
