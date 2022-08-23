@@ -552,7 +552,7 @@ static void wayland_pointer_send_events(wayland_seat *self) {
     break;
   }
 
-  if (self->button.button >= 0) {
+  if (self->button.button > 0) {
     if (self->button.pressed) {
       rofi_view_handle_mouse_motion(state, self->button.x, self->button.y,
                                     FALSE);

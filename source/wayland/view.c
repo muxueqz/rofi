@@ -129,7 +129,7 @@ static const int loc_transtable[9] = {
     WL_EAST,   WL_SOUTH | WL_EAST, WL_SOUTH, WL_SOUTH | WL_WEST,
     WL_WEST};
 
-static void wayland_rofi_view_calculate_window_position(RofiViewState *state) {}
+static void wayland_rofi_view_calculate_window_position(G_GNUC_UNUSED RofiViewState *state) {}
 
 static int rofi_get_location(RofiViewState *state) {
   return rofi_theme_get_position(WIDGET(state->main_window), "location",
@@ -428,7 +428,7 @@ static void wayland_rofi_view_cleanup() {
   }
 }
 
-static void wayland_rofi_view_set_window_title(const char *title) {}
+static void wayland_rofi_view_set_window_title(G_GNUC_UNUSED const char *title) {}
 
 static void wayland_rofi_view_pool_refresh(void) {
   RofiViewState *state = rofi_view_get_active();
