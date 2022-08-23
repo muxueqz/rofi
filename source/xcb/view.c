@@ -69,13 +69,6 @@
 
 #include "xcb.h"
 
-/**
- * @param state The handle to the view
- * @param qr    Indicate if queue_redraw should be called on changes.
- *
- * Update the state of the view. This involves filter state.
- */
-
 static int xcb_rofi_view_calculate_window_height(RofiViewState *state);
 
 static void xcb_rofi_view_set_window_title(const char *title);
@@ -248,6 +241,12 @@ static gboolean xcb_rofi_view_repaint(G_GNUC_UNUSED void *data) {
   return (bench_update() == TRUE) ? G_SOURCE_CONTINUE : G_SOURCE_REMOVE;
 }
 
+/**
+ * @param state The handle to the view
+ * @param qr    Indicate if queue_redraw should be called on changes.
+ *
+ * Update the state of the view. This involves filter state.
+ */
 static void xcb_rofi_view_update(RofiViewState *state, gboolean qr) {
   if (!widget_need_redraw(WIDGET(state->main_window))) {
     return;
