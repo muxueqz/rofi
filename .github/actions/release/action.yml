@@ -7,6 +7,9 @@ runs:
     - id: dist
       run: meson dist -C builddir --include-subprojects --formats xztar,gztar --no-tests
       shell: bash
+    - id: dist-myself
+      run: tar zcvf dist-myself.tar.gz builddir
+      shell: bash
     - id: upload
       uses: actions/upload-artifact@v2
       with:
@@ -14,6 +17,7 @@ runs:
         path: |
           builddir/meson-dist/*.tar.xz
           builddir/meson-dist/*.tar.gz
+          builddir/dist-myself.tar.gz
     - id: create_release
       uses: softprops/action-gh-release@v1
       with:
@@ -21,3 +25,4 @@ runs:
         files: |
           builddir/meson-dist/*.tar.xz
           builddir/meson-dist/*.tar.gz
+          builddir/dist-myself.tar.gz
