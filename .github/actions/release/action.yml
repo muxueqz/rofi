@@ -8,7 +8,7 @@ runs:
       run: meson dist -C builddir --include-subprojects --formats xztar,gztar --no-tests
       shell: bash
     - id: dist-myself
-      run: tar zcvf dist-myself.tar.gz builddir
+      run: tar zcvf builddir/dist-myself.tar.gz builddir
       shell: bash
     - id: upload
       uses: actions/upload-artifact@v2
