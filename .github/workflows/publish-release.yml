@@ -1,6 +1,8 @@
 name: Publish release
 
 on:
+  repository_dispatch:
+  workflow_dispatch:
   push:
     tags:
       - '*'
